@@ -19,16 +19,22 @@ int stor_BBB_transport(u32 datalen, u32 cmdlen, u8 dir_in, u8 *buf);
 extern void _delay_1ms(UINT32 period); // force delay even in CSIM
 extern void boot_reset(void);
 
+void uphy_init(void)
+{
+}
+
 void usb_power_init(void)
 {
 	// a. enable pin mux control
 	//    Host: enable
 	//    Device: disable
+#if defined(PLATFORM_SP7350)
 	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 13); // USB30C0_CLKEN=1
 	// Reset USB30C0
 	MOON0_REG_AO->reset[5] = RF_MASK_V_SET(1 << 13); // USB30C0_RESET=1
 	_delay_1ms(1);
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 13); // USB30C0_RESET=0
+#endif
 }
 
 void handshake(volatile u32 *ptr, u32 mask, u32 done, int usec)
@@ -2372,7 +2378,13 @@ int usb_init(int port, int next_port_in_hub)
 				}
 			}
 			//end
+#if !defined(PLATFORM_SP7350)
+			CSTAMP(0xE5B00001);
+			uphy_init();
 
+			CSTAMP(0xE5B00002);
+			usb_power_init();
+#endif
 			// Set RGST : allow access from non-secure
 			for (i = 0; i < 32; i++) {
 				RGST_SECURE_REG->cfg[i] = 0; // non-secure
@@ -2382,7 +2394,9 @@ int usb_init(int port, int next_port_in_hub)
        		}
 /* usb-uclass.c/usb_init.c -> xhci-spdwc3.c/xhci_dwc3_probe*/
 // xhci register base
+#if defined(PLATFORM_SP7350)
 		g_io_buf.usb.xhci.hccr = (struct xhci_hccr *) XHCI0_REG;
+#endif
 		g_io_buf.usb.xhci.hcor = (struct xhci_hcor *)((char *)g_io_buf.usb.xhci.hccr +
 				  	HC_LENGTH(g_io_buf.usb.xhci.hccr->cr_capbase));
         	dwc3_reg = (struct dwc3 *)((char *)(g_io_buf.usb.xhci.hccr) + DWC3_REG_OFFSET);
@@ -2501,10 +2515,11 @@ int usb_init(int port, int next_port_in_hub)
 #ifdef XHCI_DEBUG
 		prn_string("\n**<xhci_start>**");
 #endif
+#if defined(PLATFORM_SP7350)
 		// Force usb3 disc recognizes as usb2 disk
 		dwc3_reg->g_usb3pipectl[0] |= (1<<17);
 		g_io_buf.usb.xhci.hcor->portregs[1].or_portsc |= 2;
-
+#endif
 		tmp1 = g_io_buf.usb.xhci.hcor->or_usbcmd;
 		tmp1 |= (CMD_RUN);
 		g_io_buf.usb.xhci.hcor->or_usbcmd = tmp1;
