@@ -8,7 +8,7 @@
 // 2. secrete key sk = HKDF(ss)
 // 3. (plaintext out, tag) = AES_GCM(sk, in)
 // 4. verify (tag == auth_tag)
-int q645_ecies_curve25519_decrypt(const u8 *receiver_Kpriv, const u8 *ephemeral_Kpub,
+int sp7350_ecies_curve25519_decrypt(const u8 *receiver_Kpriv, const u8 *ephemeral_Kpub,
 		const u8 *iv, u32 ivlen, u8 *in, u32 inlen, u8 *out, const u8 auth_tag[16])
 {
 	__ALIGN4
@@ -45,7 +45,7 @@ static int is_nonzero(const u8 *buf, int len)
 }
 
 const uint8_t ed_pub_0[32] = { 0xA0, 0xD0, 0x0C, 0xB4, 0xA3, 0x48, 0x2C, 0x53, 0xC1, 0x32, 0xC9, 0x07, 0x9F, 0x92, 0xA4, 0x3E, 0x4F, 0x8B, 0xDA, 0x04, 0x62, 0xCA, 0x96, 0x1B, 0x9F, 0xBE, 0x06, 0xC8, 0xEC, 0x5D, 0x4F, 0x89 };
-static int q645_load_otp_Sb_pub_key(u8 in_pub[32])
+static int sp7350_load_otp_Sb_pub_key(u8 in_pub[32])
 {
 	int ret = 0;
 
@@ -58,7 +58,8 @@ static int q645_load_otp_Sb_pub_key(u8 in_pub[32])
 #else
 	CSTAMP(0xbbbbbbbb);
 
-	ret = SC_key_otp_load(in_pub, 0, 32); // G779.0~7
+	ret = SC_key_otp_load(in_pub, 16*4, 32); // OTP16~23 from G73
+
 #endif
 
 #ifdef CONFIG_BOOT_ON_ZEBU
@@ -70,7 +71,7 @@ static int q645_load_otp_Sb_pub_key(u8 in_pub[32])
 }
 
 const uint8_t x_priv_0[32] = { 0x88, 0xD2, 0xFB, 0x65, 0xBF, 0xF7, 0xB9, 0x2D, 0xCF, 0x7A, 0x9B, 0x29, 0xBF, 0x49, 0xBC, 0xF7, 0xE9, 0x80, 0x56, 0x70, 0x28, 0xF7, 0x10, 0xD2, 0x0C, 0x0E, 0x61, 0x5A, 0xE3, 0x53, 0xA9, 0x7E };
-static int q645_load_otp_Device_priv_key(u8 in_priv[32])
+static int sp7350_load_otp_Device_priv_key(u8 in_priv[32])
 {
 	int ret = 0;
 
@@ -82,7 +83,8 @@ static int q645_load_otp_Device_priv_key(u8 in_priv[32])
 	prn_string("Test priv-key:\n");
 #else
 
-	ret = SC_key_otp_load(in_priv, 32, 32); // G779.8~15
+	ret = SC_key_otp_load(in_priv, 24*4, 32); // OTP24~32 from G73
+
 #endif
 
 #ifdef CONFIG_BOOT_ON_ZEBU
@@ -92,7 +94,7 @@ static int q645_load_otp_Device_priv_key(u8 in_priv[32])
 	return ret;
 }
 
-static struct sb_info *q645_get_sb_info(const struct image_header  *hdr)
+static struct sb_info *sp7350_get_sb_info(const struct image_header  *hdr)
 {
 	struct sb_info *xsb = NULL;
 
@@ -112,7 +114,7 @@ static struct sb_info *q645_get_sb_info(const struct image_header  *hdr)
 	return xsb;
 }
 
-static int q645_verify_image_signature(const struct image_header *hdr, struct sb_info *xsb)
+static int sp7350_verify_image_signature(const struct image_header *hdr, struct sb_info *xsb)
 {
 	__ALIGN4
 	u8 h_val[64], sig[64];
@@ -129,7 +131,7 @@ static int q645_verify_image_signature(const struct image_header *hdr, struct sb
 	prn_string("Verify signature\n");
 
 	/* Load public key */
-	if (q645_load_otp_Sb_pub_key(in_pub)) {
+	if (sp7350_load_otp_Sb_pub_key(in_pub)) {
 		prn_string("load otp Sb_Kpub fail\n");
 		return ret;
 	}
@@ -189,7 +191,7 @@ static int q645_verify_image_signature(const struct image_header *hdr, struct sb
 	return ret;
 }
 
-static int q645_decrypt_image(const struct image_header *hdr, struct sb_info *xsb, u8 *cipher_bin)
+static int sp7350_decrypt_image(const struct image_header *hdr, struct sb_info *xsb, u8 *cipher_bin)
 {
 	__ALIGN4
 	u8 dev_Kpriv[32];
@@ -203,7 +205,7 @@ static int q645_decrypt_image(const struct image_header *hdr, struct sb_info *xs
 
 	CSTAMP(0x236b0001);
 
-	if (q645_load_otp_Device_priv_key(dev_Kpriv)) {
+	if (sp7350_load_otp_Device_priv_key(dev_Kpriv)) {
 		prn_string("load otp Dev_Kpriv fail\n");
 		return -1;
 	}
@@ -236,7 +238,7 @@ static int q645_decrypt_image(const struct image_header *hdr, struct sb_info *xs
 			32, additional, 0, xsb->KAES_auth_tag, 0);
 #else
 	// Method 2: Ed25519_verify + ECIES_decrypt key + AES_decrypt uboot
-	ret = q645_ecies_curve25519_decrypt(dev_Kpriv, (const u8 *)xsb->eph_Kpub,
+	ret = sp7350_ecies_curve25519_decrypt(dev_Kpriv, (const u8 *)xsb->eph_Kpub,
 		(const u8 *)xsb->eph_IV, 12, (u8 *)xsb->KAES_encrypted, 32,
 		sess_Kaes, (const u8 *)xsb->KAES_auth_tag);
 #endif
@@ -284,7 +286,7 @@ clr_out:
 }
 
 /* Return ROM_SUCCESS(=0) if ok */
-int q645_image_verify_decrypt(const struct image_header  *hdr)
+int sp7350_image_verify_decrypt(const struct image_header  *hdr)
 {
 	int ret = 0;
 	int mmu = 0;
@@ -313,7 +315,7 @@ int q645_image_verify_decrypt(const struct image_header  *hdr)
 
 	/* Is SB info appended */
 	prn_string("read SB info\n");
-	xsb = q645_get_sb_info(hdr);
+	xsb = sp7350_get_sb_info(hdr);
 	if (NULL == xsb){
 		prn_string("SB img: bad SB info\n");
 		return ROM_FAIL;
@@ -333,7 +335,7 @@ int q645_image_verify_decrypt(const struct image_header  *hdr)
 
 	/* Verify signature */
 
-	if (q645_verify_image_signature(hdr, xsb)) {
+	if (sp7350_verify_image_signature(hdr, xsb)) {
 		CSTAMP(0x23490009);
 
 		// Bad signature
@@ -357,7 +359,7 @@ int q645_image_verify_decrypt(const struct image_header  *hdr)
 	}
 
 	/* Decrypt uboot/fip */
-	if (q645_decrypt_image(hdr, xsb, (u8 *)hdr + sizeof(struct image_header))) {
+	if (sp7350_decrypt_image(hdr, xsb, (u8 *)hdr + sizeof(struct image_header))) {
 		CSTAMP(0x2349000c);
 
 		prn_string("fail to decrypt uboot/fip\n");

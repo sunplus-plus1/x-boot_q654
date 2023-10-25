@@ -31,26 +31,14 @@ void prn_dump(const char *title, const unsigned char *buf, int len)
 	prn_string("\n");
 }
 
-#if defined(PLATFORM_SP7350)
-//#include "verify_image_q654.c"
-#include "verify_image_q654_hw.c"
-#elif defined(PLATFORM_Q645)
-#include "verify_image_q645.c"
-#else
-#include "verify_image_q628.c"
-#endif
+#include "verify_image_sp7350_hw.c"  //by hw
+//#include "verify_image_sp7350.c"   //by software
 
 int xboot_verify_next_image(const struct image_header  *hdr)
 {
 	int ret;
 
-#if defined(PLATFORM_SP7350)
-	ret = q654_image_verify_decrypt(hdr);
-#elif defined(PLATFORM_Q645)
-	ret = q645_image_verify_decrypt(hdr);
-#else
-	ret = q628_verify_uboot_signature(hdr);
-#endif
+	ret = sp7350_image_verify_decrypt(hdr);
 	if (ret) {
 		prn_string(image_get_name(hdr));
 		prn_string(" verify fail !!\nhalt!");

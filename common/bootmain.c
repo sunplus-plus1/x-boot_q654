@@ -25,95 +25,43 @@ unsigned int getBootDevID(void)
 
 void set_spi_nor_pinmux(int pin_x)
 {
-#ifdef PLATFORM_I143
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(0x3 << 0, pin_x << 0);
-#elif defined (PLATFORM_Q645)
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(0x1 << 0, pin_x << 0);
-#elif defined(PLATFORM_SP7350)
 	MOON1_REG_AO->sft_cfg[1] = RF_MASK_V(0x1 << 0, pin_x << 0);
-#else
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(0xf, (pin_x << 2) | pin_x);
-#endif
 
 }
 
 /* Return 1 = X1,SPI_NOR, 2 = X2,SPI_NOR */
 int get_spi_nor_pinmux(void)
 {
-#if defined(PLATFORM_Q645)
-	return (MOON1_REG->sft_cfg[1] >> 0) & 0x1;
-#elif defined(PLATFORM_SP7350)
 	return (MOON1_REG_AO->sft_cfg[1] >> 0) & 0x1;
-#else
-	return MOON1_REG->sft_cfg[1] & 0x3;
-#endif
 }
 
 static inline void set_spi_nand_pinmux(int pin_x)
 {
-#if defined(PLATFORM_SP7350)
 	MOON1_REG_AO->sft_cfg[1] = RF_MASK_V(0x3 << 2, pin_x << 2);
-#elif defined(PLATFORM_Q645)
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(0x3 << 4, pin_x << 4);
-
-	/* Set CLK softpad delay to reduce data output skew issue for X1 pinmux.
-	 * Enable CLK softpad fucntion and set the delay to 15 (Max).
-	 */
-	if (pin_x == 1)
-		*(volatile u32 *)(0xF8003300) = 0x0010001E;
-	prn_string("F8003300: "); prn_dword(*(volatile u32 *)(0xF8003300));
-#else
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(1 << 4, pin_x << 4);
-#endif
 }
 
 __attribute__((unused))
 int get_spi_nand_pinmux(void)
 {
-#if defined(PLATFORM_SP7350)
 	return ((MOON1_REG_AO->sft_cfg[1] >> 2) & 0x3);
-#elif defined(PLATFORM_Q645)
-	return ((MOON1_REG->sft_cfg[1] >> 4) & 0x3);
-#else
-	return ((MOON1_REG->sft_cfg[1] >> 4) & 0x1);
-#endif
 }
 
 static inline void set_emmc_pinmux(int pin_x)
 {
-#ifdef PLATFORM_I143
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(1 << 2, pin_x << 2);
-#elif defined (PLATFORM_Q645)
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(1 << 3, pin_x << 3);
-#elif defined(PLATFORM_SP7350)
 	MOON1_REG_AO->sft_cfg[1] = RF_MASK_V(1 << 1, pin_x << 1);
-#else
-	// Q628 eMMC : X1,CARD0_SD
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(1 << 5, pin_x << 5);
-#endif
 }
 
 static inline void set_sdcard1_pinmux(int pin_x)
 {
-#ifdef PLATFORM_I143
-	MOON1_REG->sft_cfg[4] = RF_MASK_V(1 << 0, pin_x << 0);
-#elif defined (PLATFORM_Q645)
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(1 << 6, pin_x << 6);
-#elif defined(PLATFORM_SP7350)
 	MOON1_REG_AO->sft_cfg[1] = RF_MASK_V(1 << 4, pin_x << 4);
-#else
-	// Q628 SD_CARD : X1,CARD1_SD
-	MOON1_REG->sft_cfg[1] = RF_MASK_V(1 << 6, pin_x << 6);
-#endif
 }
 
 #ifdef CONFIG_HAVE_PARA_NAND
 static inline void set_para_nand_pinmux(int pin_x)
 {
-#if defined(PLATFORM_SP7350)
 	// G1.1[6] = PARA PAND
 	MOON1_REG_AO->sft_cfg[1] = RF_MASK_V(0x1 << 6, pin_x << 6);
-#endif
+
 }
 #endif
 

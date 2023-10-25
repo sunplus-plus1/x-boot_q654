@@ -17,13 +17,9 @@
 #include <usb/xhci_usb.h>
 #endif
 #include <nand_boot/nfdriver.h>
-#if defined (CONFIG_PLATFORM_Q645) || defined (CONFIG_PLATFORM_SP7350)
 #include <hal/hal_cache.h>
 #include <spinand_boot/sp_spinand_q645.h>
 #include <paranand_boot/para_nand_hal.h>
-#else
-#include <spinand_boot/sp_spinand.h>
-#endif
 #include <sdmmc_boot/hal_sd_mmc.h>
 #include <romvsr.h>
 
@@ -149,7 +145,7 @@ union storage_buf {
 
 #define SB_FLAG_ENABLE    1
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
+
 #define FLAG_SECURE_ENABLE       (1 << 0)
 #define FLAG_HSM_DISABLE         (1 << 8)
 #define IS_IC_SECURE_ENABLE()    (g_bootinfo.hw_security & FLAG_SECURE_ENABLE)
@@ -157,7 +153,7 @@ union storage_buf {
 
 #define IBOOT_FLAG_SILENT        (1 << 0)
 #define IS_IC_SILENT()           (g_bootinfo.iboot_flags & IBOOT_FLAG_SILENT)
-#endif
+
 struct bootinfo {
 	u32     bootrom_ver;         // iboot version
 	u32     hw_bootmode;         // hw boot mode (latched: auto, nand, usb_isp, sd_isp, etc)
@@ -169,9 +165,9 @@ struct bootinfo {
 	u32     mp_flag;             // mp machine flag
 	u32     bootcpu;             // 0: B, 1: A
 	u32     in_xboot;            // 0=in iboot, 1=in xboot
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
+
 	u32     hw_security;         // hw security
-#endif
+
 	u32     sb_flag;             // secure boot flag, bit0=1(secure boot)
 
 	/*
@@ -191,12 +187,10 @@ struct bootinfo {
 	UINT8 reserved;
 	SDev_t gsdev;
 
-#ifdef PLATFORM_SP7350
 	/* nand/para_nand.c */
 	struct flash_info flash_readable_info;
 	UINT32 g_u32_ahb_memory_space;
 	struct channel_status para_nand_status;
-#endif
 
 	/* nand/nfdriver.c */
 	UINT32 g_int_wake_up_flag;

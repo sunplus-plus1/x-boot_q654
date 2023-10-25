@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <config.h>
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
+#if defined(PLATFORM_SP7350)
 
 /* This is used as a signature to validate the blob header */
 #define TOC_HEADER_NAME	0xAA640001

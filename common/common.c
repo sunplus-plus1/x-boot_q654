@@ -109,21 +109,9 @@ void boot_reset(void)
 
 	_delay_1ms(10);
 
-	/* enable watchdog reset */
-#if defined(PLATFORM_Q628)
-	MOON4_REG->misc_ctl_0 = RF_MASK_V_SET((1 << 4) | (1 << 1));
-#endif
-
 	/* STC: watchdog control */
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	STC_REG->timerw_ctl = 0x3877;
 	STC_REG->timerw_ctl = 0xAB00;
 	STC_REG->timerw_cnt = 0x0001;
 	STC_REG->timerw_ctl = 0x4A4B;
-#else
-	STC_REG->timerw_ctrl = 0x3877;
-	STC_REG->timerw_ctrl = 0xAB00;
-	STC_REG->timerw_cnt  = 0x0001;
-	STC_REG->timerw_ctrl = 0x4A4B;
-#endif
 }

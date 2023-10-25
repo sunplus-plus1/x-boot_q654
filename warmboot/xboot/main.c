@@ -20,13 +20,8 @@
 /* STC 90kHz : 1 tick = 11.11 us */
 inline void STC_delay_ticks(u32 ticks)
 {
-#ifdef PLATFORM_SP7350
 	STC_REG->stc_31_0 = 0;
 	while (STC_REG->stc_31_0 < ticks);
-#else
-	STC_REG->stc_15_0 = 0;
-	while (STC_REG->stc_15_0 < ticks);
-#endif
 }
 
 /* STC 90kHz : max delay = 728 ms */

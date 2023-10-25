@@ -2,7 +2,7 @@
 #include <usb/xhci_usb.h>
 #include <fat/fat.h>
 #include <common.h>
-#include <SECGRP1.h>
+#include <SECGRP_sp7350.h>
 #ifdef FPGA
 #define XHCI_DEBUG
 #endif

@@ -8,17 +8,7 @@ choice
 endchoice
 choice
 	prompt "Platform"
-	default PLATFORM_Q628
-	config PLATFORM_Q628
-		bool "Q628"
-	config PLATFORM_I137
-		bool "I137"
-	config PLATFORM_3502
-		bool "3502"
-	config PLATFORM_I143
-		bool "I143"
-	config PLATFORM_Q645
-		bool "Q645"
+	default PLATFORM_SP7350
 	config PLATFORM_SP7350
 		bool "SP7350"
 endchoice
@@ -26,7 +16,7 @@ endchoice
 choice
 prompt "DRAM type"
 default LPDDR4
-depends on PLATFORM_Q645 || PLATFORM_SP7350
+depends on PLATFORM_SP7350
 config  LPDDR4
 	bool "LPDDR4"
 config DDR4
@@ -39,7 +29,7 @@ endchoice
 
 choice
 prompt "DRAM part number"
-depends on PLATFORM_Q645 || PLATFORM_SP7350
+depends on PLATFORM_SP7350
 config  NT6AN1024F32AV
 	depends on LPDDR4
 	bool "NT6AN1024F32AV"
@@ -209,31 +199,19 @@ config HAVE_ARCH_FASTMEM
 	bool "Use memset/memcpy fast assembly code"
 	default y
 
-menu "Power saving"
-	config PARTIAL_CLKEN
-		bool "Enable partial clocks to save power (heuristics)"
-		depends on PLATFORM_Q628
-
-	config DISABLE_CORE2_3
-		bool "Disable A's core 2, 3"
-		depends on PLATFORM_Q628
-		help
-		  Don't power on A's core 2, 3.
-endmenu
-
 config USE_ROM_SHARE
 	bool "Use rom share"
-	depends on PLATFORM_Q645 || PLATFORM_SP7350
+	depends on PLATFORM_SP7350
 
 config LOAD_BL31
 	bool "Load and run BL31 (Secure Monitor)"
 	default y
-	depends on PLATFORM_Q645 || PLATFORM_SP7350
+	depends on PLATFORM_SP7350
 
 menu "Experiments"
 	config A64_EL1
 		bool "Drop from EL3 to EL1 in xBoot"
-		depends on PLATFORM_Q645 || PLATFORM_SP7350
+		depends on PLATFORM_SP7350
 		help
 		  By default, xboot is at EL3 AArch64.
 		  Select this option to drop xBoot to NS-EL1(default)
@@ -254,10 +232,3 @@ config SECURE_BOOT_SIGN
 	  Sign xboot image and append generated signature to it.
 	  If IC OTP secure boot bit is enabled, ROM code only boots
 	  signed xboot image.
-
-config I143_C_P
-	bool "I143_C_P"
-	default y
-	depends on ARCH_RISCV && XIP_SPIBAREMETAL=n
-	help
-	  I143_C_P(U54+CA7),CA7 code place in xboot.bin from 26K  to 27k

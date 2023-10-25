@@ -316,7 +316,7 @@ static void sp_expmod(u8 *dst, u8 *src, u8 *e, u8 *n, u32 len)
 #define HEADER_SZ	(sizeof(struct image_header))
 
 /* Return ROM_SUCCESS(=0) if ok */
-int q654_image_verify_decrypt(const struct image_header  *hdr)
+int sp7350_image_verify_decrypt(const struct image_header  *hdr)
 {
 	u32 data_size = image_get_size(hdr) - (RSA_KEY_SZ * 2);
 	u8 *data = (u8 *)image_get_data(hdr);

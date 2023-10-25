@@ -5,9 +5,7 @@
 #include <regmap.h>
 #include <fat/fat.h>
 #include <cpu/cpu.h>
-#ifdef PLATFORM_Q628
-#include <cpu/arm.h>
-#endif
+
 #include <image.h>
 #include <misc.h>
 #include <otp/sp_otp.h>
@@ -19,34 +17,17 @@
 #include <sdmmc_boot/drv_sd_mmc.h>    /* initDriver_SD */
 #include <part_efi.h>
 #endif
-#include <SECGRP1.h>
+#include <SECGRP_sp7350.h>
 
-#if defined(PLATFORM_SP7350)
 #include <hal_gpio.h>
-#endif
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 #include <cpio.h>
-#endif
 
 #ifdef CONFIG_SECURE_BOOT_SIGN
-#ifdef PLATFORM_Q628
-#define SIGN_DATA_SIZE	(64+8)  // |header+data+flag(8)+sign(64)|
-#else
 #define SIGN_DATA_SIZE	(64)    // |header(64)|
-#endif
 #else
 #define SIGN_DATA_SIZE (0)
 #endif
 
-//#define OTP_TEST
-#if defined(PLATFORM_Q645)
-//#define PLLD_333MHz
-//#define PLLD_400MHz
-//#define PLLD_600MHz
-//#define PLLD_650MHz
-#define PLLD_800MHz
-#endif
-#if defined(PLATFORM_SP7350)
 #if defined(CONFIG_LPDDR4)
 #define PLLD_800MHz
 #elif defined(CONFIG_DDR4)
@@ -71,7 +52,6 @@
 //#define CLKGEN_EMMC_800M
 //#define CLKGEN_EMMC_358M
 //#define CLKGEN_EMMC_716M
-#endif
 
 /*
  * TOC
@@ -94,9 +74,8 @@ __attribute__ ((section("storage_buf_sect")))    union storage_buf   g_io_buf;
 __attribute__ ((section("bootinfo_sect")))       struct bootinfo     g_bootinfo;
 __attribute__ ((section("boothead_sect")))       u8                  g_boothead[GLOBAL_HEADER_SIZE];
 __attribute__ ((section("xboot_header_sect")))   u8                  g_xboot_buf[32];
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
+
 fat_info g_finfo;
-#endif
 
 static void halt(void)
 {
@@ -105,92 +84,7 @@ static void halt(void)
 	}
 }
 
-static void fixup_boot_compatible(void)
-{
-	prn_string("put bootinfo\n");
 
-	/* bootinfo and bhdr SRAM addresses are changed in new iBoot ROM v1.02.
-	 * Have a copy in old addresses so that u-boot can use it.
-	 * Though these addresses are in new 3K-64 stack. 2K-64 stack is sufficient near
-	 * exit_xboot.
-	 */
-
-	#define ROM_V100_BOOTINFO_ADDR	(SRAM0_BASE+0x9400)//0x9e809400
-	#define ROM_V100_BHDR_ADDR	(SRAM0_BASE+0x9600) //0x9e809600
-	memcpy((u8 *)ROM_V100_BOOTINFO_ADDR, (UINT8 *)&g_bootinfo, sizeof(struct bootinfo));
-
-	if ((g_bootinfo.gbootRom_boot_mode == SPINAND_BOOT) ||
-	    (g_bootinfo.gbootRom_boot_mode == PARA_NAND_BOOT)) {
-		memcpy((u8 *)ROM_V100_BHDR_ADDR, (UINT8 *)&g_boothead, GLOBAL_HEADER_SIZE);
-	}
-}
-
-#ifdef PLATFORM_I143
-static void copy_bootinfo_to_0xfe809a00(void)
-{
-	// To support Synopsys USB3, SRAM layout is re-defined.
-	// In order to support new layout, copy bootinfo to new area.
-	memcpy((u8 *)0xfe809a00, (UINT8 *)&g_bootinfo, sizeof(struct bootinfo));
-}
-#endif
-
-#ifdef PLATFORM_Q628
-static void exit_xboot(const char *msg, u32 addr)
-{
-	fixup_boot_compatible();
-	prn_decimal_ln(AV1_GetStc32());
-	if (msg) {
-		prn_string(msg); prn_dword(addr);
-	}
-	exit_bootROM(addr);
-}
-static int b_pll_get_rate(void)
-{
-	unsigned int reg = MOON4_REG->pllsys;    /* G4.26 */
-	unsigned int reg2 = MOON4_REG->clk_sel0; /* G4.27 */
-
-	if ((reg >> 9) & 1) /* bypass? */
-		return 27000000;
-	return (((reg & 0xf) + 1) * 13500000) >> ((reg2 >> 4) & 0xf);
-}
-static void prn_clk_info(int is_A)
-{
-	unsigned int b_sysclk, io_ctrl;
-	unsigned int a_pllclk, coreclk, ioclk, sysclk, clk_cfg, a_pllioclk;
-
-	prn_string("B: b_sysclk=");
-	b_sysclk = b_pll_get_rate();
-	prn_decimal(b_sysclk / 1000000);
-	prn_string("M abio_ctrl=(");
-	io_ctrl = BIO_CTL_REG->io_ctrl;
-	prn_decimal((io_ctrl & 2) ? 16 : 8);
-	prn_string((io_ctrl & 1) ? "bit,DDR)\n" : "bit,SDR)\n");
-
-	if (is_A) {
-		clk_cfg = A_MOON0_REG->clk_cfg;
-		a_pllclk = (((A_MOON0_REG->pll_ctl[0] >> 16) & 0xff) + 1) * (27 * 1000 * 1000);
-		coreclk = a_pllclk / (1 + ((clk_cfg >> 10) & 1));
-		sysclk = coreclk / (1 + ((clk_cfg >> 3) & 1));
-		a_pllioclk = (((A_MOON0_REG->pllio_ctl[0] >> 16) & 0xff) + 1) * (27 * 1000 * 1000);
-		ioclk = a_pllioclk / (20 + 5 * ((clk_cfg >> 4) & 7)) / ((clk_cfg >> 16) & 0xff) * 10;
-		prn_string("A: a_pllc="); prn_decimal(a_pllclk / 1000000);
-		prn_string("M core="); prn_decimal(coreclk / 1000000);
-		prn_string("M a_sysclk="); prn_decimal(sysclk / 1000000);
-		prn_string("M a_pllio="); prn_decimal(a_pllioclk / 1000000);
-		prn_string("M abio_bus="); prn_decimal(ioclk / 1000000);
-		prn_string("M\n");
-	}
-}
-#endif
-
-static void prn_A_setup(void)
-{
-	prn_string("A_G0.11(pll): "); prn_dword(A_PLL_CTL0_CFG);
-	prn_string("A_G0.3(abio): "); prn_dword(ABIO_CFG);
-	prn_string("A_G0.18(ioctrl): "); prn_dword(ABIO_IOCTRL_CFG);
-}
-
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 // SP7350 pin setting
 // G_MX0 ~ G_MX49	: 0 ~ 49
 // AO_MX0 ~ AO_MX48	: 50 ~ 98
@@ -222,13 +116,11 @@ static void set_pad_driving_strength(u32 pin, u32 strength)
 	else
 		PAD_CTL_REG->driving_selector3[reg_off] &= ~bit_mask;
 }
-#endif
 
 static void init_hw(void)
 {
 	int i;
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	// enable CA55_SYS_TIMER
 	volatile u32 *r = (void *)0xf810a000;
 	r[2] = 0xfffffff0; // set cntl
@@ -237,38 +129,7 @@ static void init_hw(void)
 
 	// Set SPI-NOR to non-secure mode (secure_enable=0).
 	*(volatile u32 *)(0xf8000b18) = *(volatile u32 *)(0xf8000b18) & 0xfffeffff;
-#endif
 
-#if defined(PLATFORM_Q628) || defined(PLATFORM_I143)
-	__attribute__((unused)) int is_A = 0;
-	dbg();
-	*(volatile unsigned int *) (0x9C000000 +0x2EC) = 0x01c30000;// set DC12_CTL_1(G5.27) to default,for DCIN_1.2V set.
-#endif
-
-#ifdef PLATFORM_Q628
-	// Set clock polarity of RMII of L2SW.
-	*(volatile u32 *)(0x9c000294) = *(volatile u32 *)(0x9c000294) | ((0xf<<16) | 0xf);
-
-	if ((cpu_main_id() & 0xfff0) == 0x9260) {
-		prn_string("-- B --\n");
-	}
-	else
-	{
-		is_A = 1;
-		prn_string("-- A --\n");
-		prn_A_setup();
-		/* raise ca7 clock */
-		extern void A_raise_pll(void);
-		A_raise_pll();
-		extern void A_setup_abio(void);
-		A_setup_abio();
-		extern void A_bus_fixup(void);
-		A_bus_fixup();
-	}
-	prn_clk_info(is_A);
-#endif
-
-#if defined(PLATFORM_SP7350)
 	/* clken[all]  = enable */
 	for (i = 0; i < sizeof(MOON2_REG_AO->clken) / 4; i++)
 		MOON2_REG_AO->clken[i] = RF_MASK_V_SET(0xffff);
@@ -280,128 +141,7 @@ static void init_hw(void)
 	/* reset[all] = clear */
 	for (i = 0; i < sizeof(MOON0_REG_AO->reset) / 4; i++)
 		MOON0_REG_AO->reset[i] = RF_MASK_V_CLR(0xffff);
-#else
-#ifdef CONFIG_PARTIAL_CLKEN
-	prn_string("partial clken\n");
-#if defined(PLATFORM_Q628)
-	/* power saving, provided by yuwen + CARD_CTL4 */
-	const int ps_clken[] = {
-		0x67ef, 0xffff, 0xff03, 0xfff0, 0x0004, /* G0.1~5  */
-		0x0000, 0x8000, 0xffff, 0x0040, 0x0004, /* G0.6~10 */
-	};
-#endif
-	for (i = 0; i < sizeof(MOON0_REG->clken) / 4; i++)
-		MOON0_REG->clken[i] = RF_MASK_V(0xffff, ps_clken[i]);
-#else
-	/* clken[all]  = enable */
-	for (i = 0; i < sizeof(MOON0_REG->clken) / 4; i++)
-		MOON0_REG->clken[i] = RF_MASK_V_SET(0xffff);
-#endif
 
-	/* gclken[all] = no */
-	for (i = 0; i < sizeof(MOON0_REG->gclken) / 4; i++)
-		MOON0_REG->gclken[i] = RF_MASK_V_CLR(0xffff);
-
-	/* reset[all] = clear */
-	for (i = 0; i < sizeof(MOON0_REG->reset) / 4; i++)
-		MOON0_REG->reset[i] = RF_MASK_V_CLR(0xffff);
-#endif
-
-#ifdef PLATFORM_I143
-	//*(volatile u32 *)(0x9C000230) = 0x3F001800;  // Down CPU FREQ to 168.75 MHz.
-	*(volatile u32 *)(0x9C000224) = 0x000C0000; // Clear G2 & G1 to 0.
-	*(volatile u32 *)(0x9C000228) = 0xFF00A000; // Down PLLFLA FREQ to 222.75 MHz.
-
-	prn_string("9C000230: "); prn_dword(*(volatile u32 *)(0x9C000230));
-	prn_string("9C000224: "); prn_dword(*(volatile u32 *)(0x9C000224));
-	prn_string("9C000228: "); prn_dword(*(volatile u32 *)(0x9C000228));
-
-	//*(volatile u32 *)(0x9C000228) = 0x00010001;  // power on FLA pll
-	//prn_string("9C000228: "); prn_dword(*(volatile u32 *)(0x9C000228));
-	*(volatile unsigned int *) (0x9C000000 +0x204) = 0xFE008600; // 0xFE008600;  0xFE00FE00
-	*(volatile unsigned int *) (0x9C000000 +0x208) = 0x00010001; // set SD CARD DS
-	*(volatile unsigned int *) (0x9C000000 +0x20C) = 0x07E007E0; // SD CARD smith tri
-
-	prn_string("9C000204: "); prn_dword(*(volatile u32 *)(0x9C000204));
-	prn_string("9C000208: "); prn_dword(*(volatile u32 *)(0x9C000208));
-	prn_string("9C00020C: "); prn_dword(*(volatile u32 *)(0x9C00020C));
-
-	*(volatile unsigned int *) (0x9C000000 +0x214) = 0xFE00FE00; // 0xFE008600;  0xFE00FE00
-	*(volatile unsigned int *) (0x9C000000 +0x218) = 0x001F001F; // set SD CARD DS 0x00010001  0x001F001F
-	*(volatile unsigned int *) (0x9C000000 +0x21C) = 0x07E007E0; // SDIO smith tri
-
-	prn_string("9C000204: "); prn_dword(*(volatile u32 *)(0x9C000204));
-	prn_string("9C000208: "); prn_dword(*(volatile u32 *)(0x9C000218));
-	prn_string("9C00020C: "); prn_dword(*(volatile u32 *)(0x9C00020C));
-
-	// for GL2SW
-	*(volatile u32 *)(0x9C000238) = 0x00800000;  // Clear CK250M_EN to 0.
-	*(volatile u32 *)(0x9C000078) = 0x00800080;  // Set GL2SW_RESET to 1.
-	STC_delay_us(100);
-	*(volatile u32 *)(0x9C000078) = 0x00800000;  // Clear GL2SW_RESET to 0.
-	//prn_string("9C000238: "); prn_dword(*(volatile u32 *)(0x9C000238));
-	//prn_string("9C000078: "); prn_dword(*(volatile u32 *)(0x9C000078));
-
-	/* GPU driver (if not,all the date that gpu output to frame buffer is 0) by xt*/
-	MOON5_REG->sft_cfg[2] = RF_MASK_V_SET((1 << 0) | (1 << 1));
-#endif
-
-#if defined(PLATFORM_Q628) && !defined(CONFIG_DISABLE_CORE2_3)
-	if (is_A) {
-		prn_string("release cores\n");
-		extern void A_release_cores(void);
-		A_release_cores();
-	}
-#endif
-
-#if defined(PLATFORM_Q645)
-	MOON1_REG->sft_cfg[2] = RF_MASK_V_CLR(0x3c);   // Disable all JTAG pins
-
-	//MOON2_REG->sft_cfg[2] = RF_MASK_V((1 << 13), (1 << 13)); // UA0 clk_sel 200M
-	//MOON2_REG->sft_cfg[2] = RF_MASK_V((1 << 14), (1 << 14)); // UA1 clk_sel 200M
-	//MOON2_REG->sft_cfg[2] = RF_MASK_V((1 << 15), (1 << 15)); // UA2 clk_sel 200M
-	//MOON2_REG->sft_cfg[3] = RF_MASK_V((1 << 0), (1 << 0));   // UA3 clk_sel 200M
-	//MOON2_REG->sft_cfg[3] = RF_MASK_V((1 << 1), (1 << 1));   // UADBG clk_sel 200M
-	//MOON2_REG->sft_cfg[12] = RF_MASK_V((1 << 0), (1 << 0));  // UA6 clk_sel 200M
-	//MOON2_REG->sft_cfg[12] = RF_MASK_V((1 << 1), (1 << 1));  // UA7 clk_sel 200M
-	//MOON2_REG->sft_cfg[12] = RF_MASK_V((1 << 2), (1 << 2));  // UA8 clk_sel 200M
-
-	MOON3_REG->sft_cfg[3] = RF_MASK_V_SET(0x80);     // U3PHY SSC on
-
-	*(volatile u32 *)ARM_TSGEN_WR_BASE = 3;          // EN = 1 and HDBG = 1
-	*(volatile u32 *)(ARM_TSGEN_WR_BASE + 0x08) = 0; // CNTCV[31:0]
-	*(volatile u32 *)(ARM_TSGEN_WR_BASE + 0x0C) = 0; // CNTCV[63:32]
-
-	//Set EVDN VCCM to be correct value(0xB1000000) that comes from EV71 IP config within arc.tcf file.
-	MOON2_REG->sft_cfg[22] = RF_MASK_V(0xffff, 0x0000);//EVDN VCCM base address low byte
-	MOON2_REG->sft_cfg[23] = RF_MASK_V(0xffff, 0xB100);//EVDN VCCM base address high byte
-
-	// SD-CARD      : 28, 29, 30, 31, 32, 33
-	// SDIO         : 34, 35, 36, 37, 38, 39
-	for (i = 28; i <= 33; i++)
-		set_pad_driving_strength(i, 5);
-	for (i = 34; i <= 39; i++)
-		set_pad_driving_strength(i, 5);
-
-#if 0
-	// Set SPI driving strength.
-	// SPI0 SPI1
-	for (i = 54; i <= 61; i++)
-		set_pad_driving_strength(i, 4);
-	// SPI3 SPI4
-	for (i = 63; i <= 66; i++)
-		set_pad_driving_strength(i, 4);
-	// SPI3 SPI4
-	for (i = 67; i <= 74; i++)
-		set_pad_driving_strength(i, 4);
-	// SPI5
-	for (i = 77; i <= 80; i++)
-		set_pad_driving_strength(i, 4);
-#endif
-
-	delay_1ms(1);
-
-#elif defined(PLATFORM_SP7350)
 	// Remap DRAM (0xf0000000 ~ 0xffffffff) to (0x100000000 ~ 0x10fffffff).
 	MOON5_REG->sft_cfg[0] = RF_MASK_V((1 << 0), (1 << 0));
 
@@ -719,52 +459,6 @@ static void init_hw(void)
 	prn_dword(MOON3_REG_AO->plld_cfg[0]);
 	prn_dword(MOON3_REG_AO->plld_cfg[1]);
 	prn_dword(MOON3_REG_AO->plld_cfg[2]);
-#endif
-
-#if defined(PLATFORM_Q645)
-	// Remap DRAM (0xe0000000 ~ 0xffffffff) to (0x100000000 ~ 0x11fffffff).
-	MOON2_REG->sft_cfg[3] = RF_MASK_V((1 << 12), (1 << 12));
-
-	/* Switch the shared analog macros to MIPI RX mode for MIPI-CSI RX0/2 */
-	MOON3_REG->sft_cfg[25] = RF_MASK_V((3 << 14), (3 << 14));
-
-#ifdef PLLD_333MHz
-	prn_string("PLLD: 333MHz\n");
-	MOON4_REG->plld_cfg[0] = RF_MASK_V(0x3FFE, 0x92b3);//333MHz, SDRAM clock 666MHz, datarate 1333
-	MOON4_REG->plld_cfg[1] = RF_MASK_V(0x000C, 0x0000);
-#endif
-
-#ifdef PLLD_400MHz
-	prn_string("PLLD: 400MHz\n");
-	MOON4_REG->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x900B);//400MHz, SDRAM clock 800MHz, datarate 1600
-#endif
-
-#ifdef PLLD_600MHz
-	prn_string("PLLD: 600MHz\n");
-	MOON4_REG->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x920B);//600MHz, SDRAM clock 1200MHz, datarate 2400
-	MOON4_REG->plld_cfg[1] = RF_MASK_V(0x000C, 0x0008);
-#endif
-
-#ifdef PLLD_650MHz
-	prn_string("PLLD: 650MHz\n");
-	MOON4_REG->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x928B);//650MHz, SDRAM clock 1300MHz, datarate 2600
-	MOON4_REG->plld_cfg[1] = RF_MASK_V(0xFFFF, 0x2B3D);
-#endif
-
-#ifdef PLLD_800MHz
-	prn_string("PLLD: 800MHz\n");
-#endif
-	prn_dword(MOON4_REG->plld_cfg[0]);
-	prn_dword(MOON4_REG->plld_cfg[1]);
-	delay_1ms(8);
-
-	// Set driving strength of all GPIO pads to 4.6 mA.
-	PAD_CTL_REG->driving_selector0[0] = 0xffffffff;
-	PAD_CTL_REG->driving_selector0[1] = 0xffffffff;
-	PAD_CTL_REG->driving_selector0[2] = 0xffffffff;
-	PAD_CTL_REG->driving_selector0[3] = 0xffffffff;
-	delay_1ms(1);
-#endif
 
 	dbg();
 }
@@ -772,39 +466,23 @@ static void init_hw(void)
 static int run_draminit(void)
 {
 	/* skip dram init on csim/zebu */
-#if defined(CONFIG_BOOT_ON_CSIM) && !defined(PLATFORM_Q645) && !defined(PLATFORM_SP7350)
-	prn_string("skip draminit\n");
-#else
 	int save_val;
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	int (*dram_init)(unsigned int);
-#else
-	int (*dram_init)(void);
-#endif
 #ifdef CONFIG_STANDALONE_DRAMINIT
 	dram_init = (void *)DRAMINIT_RUN_ADDR;
 	prn_string("standalone draiminit\n");
 	dram_init = (void *)DRAMINIT_RUN_ADDR;
 #else
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	extern int dram_init_main(unsigned int);
-#else
-	extern int dram_init_main(void);
-#endif
 	dram_init = (void *)dram_init_main;
 #endif
 
 	prn_string("Run draiminit@"); prn_dword((u32)ADDRESS_CONVERT(dram_init));
 	save_val = g_bootinfo.mp_flag;
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	dram_init(g_bootinfo.gbootRom_boot_mode);
-#else
-	dram_init();
-#endif
 	g_bootinfo.mp_flag = save_val;	/* restore prints */
 	prn_string("Done draiminit\n");
-#endif
 
 #ifdef CONFIG_USE_ZMEM
 	/* don't corrupt zmem */
@@ -826,30 +504,20 @@ static int run_draminit(void)
 	GPIO_OUT_REG->gpio_out[53 / 16] = 0x10001 << (53 % 16);
 #endif
 
-#if defined(PLATFORM_SP7350)   // AP6256 GPIO reset pin for SP7350 EVB
 	GPIO_MASTER_REG->gpio_master[56 / 16] = 0x10001 << (56 % 16);
 	GPIO_OUT_REG->gpio_out[56 / 16] = 0x10000 << (56 % 16);
 	GPIO_OE_REG->gpio_oe[56 / 16] = 0x10001 << (56 % 16);
 	PAD_CTL_REG->gpio_first[56 / 32] |=  1 << (56 % 32);
 	prn_string("set pin53 " __DATE__ " " __TIME__ "\n");
 	GPIO_OUT_REG->gpio_out[56 / 16] = 0x10001 << (56 % 16);
-#endif
 
 	return 0;
 }
 
 static inline void release_spi_ctrl(void)
 {
-#if defined(PLATFORM_Q645)
-	// SPIFL no reset
-	MOON0_REG->reset[2] = RF_MASK_V_CLR(1 << 10); /* SPIFL_RESET=0 */
-#elif defined(PLATFORM_SP7350)
 	// SPIFL no reset
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 1); /* SPIFL_RESET=0 */
-#else
-	// SPIFL & SPI_COMBO no reset
-	MOON0_REG->reset[0] = RF_MASK_V_CLR(3 << 9); /* SPI_COMBO_RESET=0, SPIFL_RESET=0 */
-#endif
 }
 
 __attribute__((unused))
@@ -972,53 +640,6 @@ static int nor_draminit(void)
 }
 #endif /* CONFIG_HAVE_SPI_NOR */
 
-static void boot_next_set_addr(unsigned int addr)
-{
-	volatile unsigned int *next = (volatile unsigned int *)BOOT_ANOTHER_POS;
-	*next = addr;
-	prn_string("boot next @"); prn_dword(*next);
-}
-
-static void boot_next_in_A(void)
-{
-	volatile u32 *pB_Addr;
-
-	fixup_boot_compatible();
-
-	prn_string("wake up A\n");
-
-	prn_A_setup();
-
-	/* Wake up another to run from boot_next_no_stack() */
-#ifdef PLATFORM_I143
-	*(volatile unsigned int *)A_START_POS_B_VIEW = CA7_START_ADDR;
-#else
-	*(volatile unsigned int *)A_START_POS_B_VIEW = (u32)&boot_next_no_stack;
-#endif
-
-	/* no print since this point */
-	g_bootinfo.mp_flag = 1;
-	pB_Addr = (volatile unsigned int *)B_START_POS;
-	*pB_Addr = CPU_WAIT_INIT_VAL;
-
-	/* B chip wait run addr */
-	while(*pB_Addr == CPU_WAIT_INIT_VAL);
-	exit_bootROM(*pB_Addr);// q628 jump to nonos_B,I143 wait!
-}
-
-#ifdef PLATFORM_I143
-#define UART_LSR_RX     (1 << 1)
-/* Clear RX buffer of UART 0. */
-static void clear_uart_rx_buf(void)
-{
-	u8 buf;
-
-	while (DBG_UART_REG->lsr & UART_LSR_RX) {
-		buf = DBG_UART_REG->dr;
-		buf = buf;
-	}
-}
-#endif
 
 #ifdef CONFIG_USE_ZMEM
 #ifdef LOAD_SPLIT_INITRAMFS
@@ -1085,18 +706,12 @@ static void zmem_check_uboot(void)
 }
 #endif
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 static void cm4_init()
 {
 	/* CM4 init, boot in rootfs by remoteproc */
 	prn_string("M4 init: \n");
-#if defined(PLATFORM_Q645)
-	MOON0_REG->reset[4]    = RF_MASK_V_SET(1 << 0); // reset M4
-	MOON2_REG->sft_cfg[24] = RF_MASK_V_SET(1 << 8); // enable M4 address (highest 8 bits) remapping
-#elif defined(PLATFORM_SP7350)
 	MOON0_REG_AO->reset[7]    = RF_MASK_V_SET(1 << 15); // reset M4
 	MOON4_REG_AO->sft_cfg[19] = RF_MASK_V_SET(1 << 1);  // enable M4 address (highest 16 bits) remapping
-#endif
 #if 0 // START M4 in zmem mode for develop
 #ifdef CONFIG_USE_ZMEM
 	volatile u32 *m4_mem = (void *)CM4_BOOT_ADDR;
@@ -1105,7 +720,6 @@ static void cm4_init()
 	prn_dword0((u32)&m4_mem[256]); prn_string(": "); prn_dword(m4_mem[256]);
 
 	prn_string("... START M4 ...\n");
-	MOON0_REG->reset[4] = 0x10000; // release reset
 #endif
 #endif
 
@@ -1143,7 +757,6 @@ static int load_tfa_optee(void)
 // RD mnatis: http://psweb.sunplus.com/mantis_PD2/view.php?id=9092
 static void set_module_nonsecure(void)
 {
-#if defined(PLATFORM_Q645)
 	int i;
 
 	// Set RGST: allow access from non-secure
@@ -1162,21 +775,6 @@ static void set_module_nonsecure(void)
 	// 16-bit mask
 	// 8-bit overwrite enable
 	// 8-bit secure(0)/non_secure(1)
-#if defined(PLATFORM_Q645)
-	//SECGRP1_MAIN_REG->G083_NIC_S01 = 0xFFFFFF00; // IP  7~0
-	SECGRP1_MAIN_REG->MAIN_NIC_S01 = 0xFFFFFC00; // IP  7~0    CA55 needs to set to be bypass mode, or N78 will probe fail due to NCU's judgement.
-	SECGRP1_MAIN_REG->MAIN_NIC_S02 = 0xFFFFFF00; // IP 15~8
-	CSTAMP(0xCBDA0003);
-	SECGRP1_PAI_REG->PAI_NIC_S02  = 0xFFFFFF00;
-	SECGRP1_PAI_REG->PAI_NIC_S03  = 0xFFFFFF00;
-	SECGRP1_PAI_REG->PAI_NIC_S04  = 0xFFFFFF00;
-	SECGRP1_PAI_REG->PAI_NIC_S05  = 0xFFFFFF00;
-	SECGRP1_PAI_REG->PAI_NIC_S06  = 0xFFFFFF00;
-	CSTAMP(0xCBDA0004);
-	SECGRP1_PAII_REG->PAII_NIC_S06 = 0xFFFFFF00;
-	SECGRP1_PAII_REG->PAII_NIC_S07 = 0xFFFFFF00;
-	SECGRP1_PAII_REG->PAII_NIC_S08 = 0xFFFFFF00;
-#elif defined(PLATFORM_SP7350)
 	SECGRP1_MAIN_REG->MAIN_NIC_S01 = 0xFFFFFF00;
 	SECGRP1_MAIN_REG->MAIN_NIC_S02 = 0xFFFFFF00;
 	CSTAMP(0xCBDA0003);
@@ -1184,50 +782,12 @@ static void set_module_nonsecure(void)
 	CSTAMP(0xCBDA0004);
 	SECGRP1_PAII_REG->PAII_NIC_S04 = 0xFFFFFF00;
 	SECGRP1_PAII_REG->PAII_NIC_S05 = 0xFFFFFF00;
-#endif
-#endif
 
-#if 0	// zebu no such ip
-	SECGRP1_VIDEOIN_REG->G114_NIC_S01 = 0xFFFFFF00;
-	SECGRP1_VIDEOIN_REG->G114_NIC_S02 = 0xFFFFFF00;
-	SECGRP1_VIDEOIN_REG->G114_NIC_S03 = 0xFFFFFF00;
-	SECGRP1_DISP_REG->G113_NIC_S01 = 0xFFFFFF00;
-	SECGRP1_DISP_REG->G113_NIC_S02 = 0xFFFFFF00;
-#endif
-#if 0//for checking IP SECURE setting
-    volatile unsigned int *addr;
-	addr = (volatile unsigned int *)0xF80029DC;//G083_NIC_S01
-	prn_string("0xF80029DC-G083_NIC_S01=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF80029E0;//G083_NIC_S02
-	prn_string("0xF80029E0-G083_NIC_S02=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF80029E4;//G083_reserved_25
-	prn_string("0xF80029E4-G083_reserved_25=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF80029E8;//G083_reserved_26
-	prn_string("0xF80029E8-G083_reserved_26=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF80029EC;//G083_reserved_27
-	prn_string("0xF80029EC-G083_reserved_27=");prn_dword(addr[0]);prn_string("\n");
-
-	addr = (volatile unsigned int *)0xF8002A60;//G084_NIC_S02
-	prn_string("0xF8002A60-G084_NIC_S02=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF8002A64;//G084_NIC_S03
-	prn_string("0xF8002A64-G084_NIC_S03=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF8002A68;//G084_NIC_S04
-	prn_string("0xF8002A68-G084_NIC_S04=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF8002A6C;//G084_NIC_S05
-	prn_string("0xF8002A6C-G084_NIC_S05=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF8002A70;//G084_NIC_S06
-	prn_string("0xF8002A70-G084_NIC_S06=");prn_dword(addr[0]);prn_string("\n");
-	addr = (volatile unsigned int *)0xF8002A74;//G084_reserved_29
-	prn_string("0xF8002A74-G084_reserved_29=");prn_dword(addr[0]);prn_string("\n");
-#endif
 }
 
 // set optee-os memory to trust zone by TZC
 void set_memory_secure(void)
 {
-
-#ifdef PLATFORM_SP7350
-
 	#define TZC_REGION_ID				(1)
 
 	*(volatile u32 *)(0xf8c40100 + 0x20 * TZC_REGION_ID) = OPTEE_RUN_ADDR;                  // BASE_LOW
@@ -1236,7 +796,6 @@ void set_memory_secure(void)
 	*(volatile u32 *)(0xf8c4010c + 0x20 * TZC_REGION_ID) = 0x00000000;                      // TOP_HIGH
 	*(volatile u32 *)(0xf8c40110 + 0x20 * TZC_REGION_ID) = 0xc000000f;                      // ATTR: secure access enable
 	*(volatile u32 *)(0xf8c40114 + 0x20 * TZC_REGION_ID) = 0x00000000;                      // ID_ACCESS disable
-#endif
 }
 
 /*
@@ -1282,19 +841,9 @@ static void go_a32_to_a64(u32 ap_addr)
 		asm volatile ("wfi");
 	}
 }
-#endif
 
 //#define TZC_TEST
 #ifdef TZC_TEST
-#if defined(PLATFORM_Q645)
-static void tzc_test(void)
-{
-	SECGRP1_MAIN_REG->MAIN_SDPROT_S01 = 0xc0000000; // reserved mem for N78
-	prn_string("MAIN_SDPROT_S01="); prn_dword(SECGRP1_MAIN_REG->MAIN_SDPROT_S01);
-	SECGRP1_MAIN_REG->MAIN_SDPROT_S03 = 0xfffffffe; // 1st 32mb is secure, others are non-secure
-	prn_string("MAIN_SDPROT_S03="); prn_dword(SECGRP1_MAIN_REG->MAIN_SDPROT_S03);
-}
-#elif defined(PLATFORM_SP7350)
 #define REG(a)		(*(volatile u32 *)(a))
 #define TZC_BASE	0xf8c40000
 #define TZC(offset)	REG(TZC_BASE + (offset))
@@ -1338,7 +887,6 @@ static void tzc_test(void)
 	ca55_dram_basic(TZC(0x120), 0xffffffff);
 }
 #endif
-#endif
 
 /* Assume u-boot has been loaded */
 static void boot_uboot(void)
@@ -1357,66 +905,18 @@ static void boot_uboot(void)
 		mon_shell();
 		halt();
 	}
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	ret = xboot_verify_next_image((struct image_header *)FIP_LOAD_ADDR);
 	if (ret) {
 		mon_shell();
 		halt();
 	}
 #endif
-#endif
-#ifdef PLATFORM_I143
-	u32 reg = *(volatile unsigned int *)HW_CFG_REG; /* = MOON0_REG->hw_cfg */
-	prn_string("hw_cfg="); prn_dword(reg);
-
-	// Clear RX buffer before jump to u-boot,
-	// to prevent from unexpected characters stopping
-	// auto-running u-boot scripts.
-	clear_uart_rx_buf();
-
-	reg = (reg & HW_CFG_MASK) >> HW_CFG_SHIFT;
-	if (reg == INT_CA7_BOOT) {
-		prn_string("C+P mode,CA7(ARM) do uboot,wait CA7 ready\n");
-		boot_next_set_addr(UBOOT_RUN_ADDR_A_VIEW);
-		if (image_get_arch(hdr) == 0x1A) {
-			prn_string("WARN: CA7 can't run riscv u-boot\n");
-			while(1);
-		}
-		while(*(volatile unsigned int *)A_START_POS_B_VIEW != 0xFFFFFFFF);	//wait CA7 start and init
-		boot_next_in_A();
-	} else {
-		copy_bootinfo_to_0xfe809a00();
-		exit_bootROM(OPENSBI_RUN_ADDR);
-	}
-
-#elif defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	prn_string((const char *)image_get_name(hdr)); prn_string("\n");
 	prn_string("Run uboot@");prn_dword(UBOOT_RUN_ADDR);
 	/* boot aarch64 uboot */
 	load_tfa_optee();
 	cm4_init();
 	go_a32_to_a64(UBOOT_RUN_ADDR);
-
-#elif defined(PLATFORM_Q628)
-	prn_string((const char *)image_get_name(hdr)); prn_string("\n");
-
-	boot_next_set_addr(UBOOT_RUN_ADDR);
-
-	is_for_A = memcmp((const u8 *)image_get_name(hdr), (const u8 *)"uboot_B", 7);
-
-	/* if B but image is for A, wake up A */
-	if (g_bootinfo.bootcpu == 0 && is_for_A) {
-		boot_next_in_A();
-	} else {
-		/* if A but image is for B, pause */
-		if (g_bootinfo.bootcpu == 1 && !is_for_A) {
-			prn_string("WARN: A can't run B's u-boot\n");
-			mon_shell();
-		}
-
-		exit_xboot("Run u-boot @", UBOOT_RUN_ADDR);
-	}
-#endif
 }
 
 #ifdef CONFIG_HAVE_SPI_NOR
@@ -1425,40 +925,11 @@ static void boot_uboot(void)
 /* Assume dtb and uImage has been loaded */
 static void boot_linux(void)
 {
-#ifdef PLATFORM_I143
-	exit_bootROM(OPENSBI_RUN_ADDR);
-
-#elif defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	CSTAMP(0x44556677);
 	prn_string("Run Linux@");
 	prn_dword(LINUX_RUN_ADDR);
 	/* boot aarch64 kernel */
 	go_a32_to_a64(LINUX_RUN_ADDR);
-
-#elif defined(PLATFORM_Q628)
-	__attribute__((unused)) int is_for_A = 0;
-	const struct image_header *hdr = (struct image_header *)LINUX_LOAD_ADDR;
-
-	prn_string((const char *)image_get_name(hdr)); prn_string("\n");
-
-	boot_next_set_addr(LINUX_RUN_ADDR);
-
-	is_for_A = (*(u32 *)LINUX_RUN_ADDR != 0xe321f0d3); /* arm9 vmlinux.bin first word */
-
-	/* if B but image is for A, wake up A */
-	if (g_bootinfo.bootcpu == 0 && is_for_A) {
-		boot_next_in_A();
-	} else {
-		/* if A but image is for B, pause */
-		if (g_bootinfo.bootcpu == 1 && !is_for_A) {
-			prn_string("WARN: A can't run B's u-boot\n");
-			mon_shell();
-		}
-
-		prn_string("run linux@"); prn_dword(LINUX_RUN_ADDR);
-		boot_next_no_stack();
-	}
-#endif
 }
 
 static void spi_nor_linux(void)
@@ -1514,7 +985,6 @@ static void spi_nor_uboot(void)
 	zmem_check_uboot();
 #else
 	int len;
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	len = nor_load_uhdr_image("fip", (void *)FIP_LOAD_ADDR,
 				      (void *)(SPI_FLASH_BASE + SPI_FIP_OFFSET), 1);
 	if (len <= 0 ){
@@ -1522,7 +992,6 @@ static void spi_nor_uboot(void)
 		mon_shell();
 		return;
 	}
-#endif
 	len = nor_load_uhdr_image("uboot", (void *)UBOOT_LOAD_ADDR,
 				      (void *)(SPI_FLASH_BASE + SPI_UBOOT_OFFSET), 1);
 	if (len <= 0) {
@@ -1536,15 +1005,6 @@ static void spi_nor_uboot(void)
 
 static void spi_nor_boot(int pin_x)
 {
-#if defined(PLATFORM_Q645)
-	int i;
-
-	// SPI-NOR (GPIO):  6,  7,  8,  9, 10, 11
-	// Set driving strength of following pins to 3 (min: 8.8mA, typ: 11.5mA).
-	for (i = 6; i <= 11; i++)
-		set_pad_driving_strength(i, 3);
-	delay_1ms(1);
-#elif defined(PLATFORM_SP7350)
 	int i;
 
 	// SPI-NOR (DVIO): 21, 22, 23, 24, 25, 26
@@ -1556,15 +1016,10 @@ static void spi_nor_boot(int pin_x)
 	PAD_CTL2_REG->dvio_pu[0] &= ~((1 << 6) | (1 << 3));	// bit 6 & 3 = 0
 	PAD_CTL2_REG->dvio_pd[0] |= (1 << 6) | (1 << 3);	// bit 6 & 3 = 1
 	delay_1ms(1);
-#endif
 
 #ifdef SPEED_UP_SPI_NOR_CLK
 	dbg();
-#ifdef PLATFORM_SP7350
 	SPI_CTRL_REG->spi_ctrl = (SPI_CTRL_REG->spi_ctrl & ~(7 << 16)) | (4 << 16); // 1: CLK_SPI/8
-#else
-	SPI_CTRL_REG->spi_ctrl = (SPI_CTRL_REG->spi_ctrl & ~(7 << 16)) | (1 << 16); // 1: CLK_SPI/2
-#endif
 
 	SPI_CTRL_REG->spi_cfg[2] = 0x00150095; // restore default after setting spi_ctrl
 #endif
@@ -1598,9 +1053,7 @@ static int fat_load_uhdr_image(fat_info *finfo, const char *img_name, void *dst,
 	prn_string("\n");
 
 	if ((type == USB_ISP)
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 		|| (type == USB_BOOT)
-#endif
 		) {
 		/* USB DMA needs 4KiB-aligned address. */
 		if ((u32)ADDRESS_CONVERT(dst) & 0xfff) {
@@ -1663,7 +1116,6 @@ static int fat_load_uhdr_image(fat_info *finfo, const char *img_name, void *dst,
 
 	return len;
 }
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 static int fat_load_fip(u32 type)
 {
 	int i=0,fip_offset=0;
@@ -1704,14 +1156,10 @@ static int fat_load_fip(u32 type)
 	}
 	return 0;
 }
-#endif
 
 static void do_fat_boot(u32 type, u32 port)
 {
 	u32 ret;
-#if !defined(PLATFORM_Q645) && !defined(PLATFORM_SP7350)
-	fat_info g_finfo;
-#endif
 #ifdef CONFIG_STANDALONE_DRAMINIT
 	u8 *buf = (u8 *) g_io_buf.usb.draminit_tmp;
 	struct xboot_hdr *xhdr = (struct xboot_hdr *)buf;
@@ -1759,7 +1207,6 @@ static void do_fat_boot(u32 type, u32 port)
 
 	run_draminit();
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	if (fat_sdcard_check_boot_mode(&g_finfo) == TRUE) {
 		if (type == SDCARD_ISP) {
 			g_bootinfo.gbootRom_boot_mode = SDCARD_BOOT;
@@ -1769,26 +1216,7 @@ static void do_fat_boot(u32 type, u32 port)
 			type = USB_BOOT;
 		}
 	}
-#else
-	if ((type == SDCARD_ISP) && (fat_sdcard_check_boot_mode(&g_finfo) == TRUE)) {
-		type = SDCARD_BOOT;
-	}
-#endif
 
-#if defined(PLATFORM_Q645)
-	if ((type == SDCARD_ISP) || (type == USB_ISP)) {
-		int i;
-
-		// SPI-NOR     (GPIO):  6,  7,  8,  9, 10, 11
-		// SPI-NAND,X1 (GPIO): 16, 17, 18, 19, 20, 21
-		// SPI-NAND,X2 (GPIO):  6,  7,  8,  9, 10, 11
-		// eMMC        (DVIO): 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
-		// Set driving strength of following pins to 3 (min: 8.8mA, typ: 11.5mA).
-		for (i = 6; i <= 21; i++)
-			set_pad_driving_strength(i, 3);
-		delay_1ms(1);
-	}
-#elif defined(PLATFORM_SP7350)
 	if ((type == SDCARD_ISP) || (type == USB_ISP)) {
 		int i;
 
@@ -1822,19 +1250,16 @@ static void do_fat_boot(u32 type, u32 port)
 		}
 		HAL_GPIO_RESET(82);
 	}
-#endif
 
 #ifdef CONFIG_USE_ZMEM
 	zmem_check_uboot();
 #else
 	/* load u-boot from usb */
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	if(fat_load_fip(type) < 0)
 	{
 		prn_string("failed to load fip \n");
 		return;
 	}
-#endif
 	if (fat_load_uhdr_image(&g_finfo, "uboot", (void *)UBOOT_LOAD_ADDR, ((type==SDCARD_BOOT)?0:ISP_IMG_OFF_UBOOT), UBOOT_MAX_LEN,type) <= 0) {
 		prn_string("failed to load uboot\n");
 		return;
@@ -2002,28 +1427,15 @@ int emmc_load_draminit(void *buf, int mmc_part)
 
 static void emmc_boot(void)
 {
-#ifndef CONFIG_USE_ZMEM
 	gpt_header *gpt_hdr;
 	gpt_entry *gpt_part;
 	u32 blk_start1 = -1, blk_start2 = -1;
 	int res, len = 0;
-#endif
-#if !defined(CONFIG_USE_ZMEM) || defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	int i;
-#endif
 
 	prn_string("\n{{emmc_boot}}\n");
 	SetBootDev(DEVICE_EMMC, 1, 0);
 
-#if defined(PLATFORM_Q645)
-	//MOON2_REG->sft_cfg[3] = RF_MASK_V((1 << 7), (1 << 7)); //CLKEMMC source is PLLD
-
-	// eMMC (DVIO): 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
-	// Set driving strength of following pins to 3 (min: 8.8mA, typ: 11.5mA).
-	for (i = 12; i <= 21; i++)
-		set_pad_driving_strength(i, 3);
-	delay_1ms(1);
-#elif defined(PLATFORM_SP7350)
 #ifdef CLKGEN_EMMC_400M
 	MOON3_REG_AO->clkgen[0] = RF_MASK_V(3, 0); //CLKEMMC source is 400M
 #endif
@@ -2042,7 +1454,6 @@ static void emmc_boot(void)
 	for (i = 28; i <= 36; i++)
 		set_pad_driving_strength(i, 4);
 	delay_1ms(1);
-#endif
 
 #ifdef CONFIG_STANDALONE_DRAMINIT
 	/* continue to load draminit after iboot loading xboot */
@@ -2157,14 +1568,12 @@ static void emmc_boot(void)
 	}
 #endif
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350) /* load fip image */
 	len = emmc_load_uhdr_image("fip", (void *)FIP_LOAD_ADDR, 0,
 				   EMMC_FIP_LBA, 0, FIP_MAX_LEN, MMC_USER_AREA);
 	if (len <= 0) {
 		prn_string("bad fip\n");
 		return;
 	}
-#endif
 	boot_uboot();
 }
 #endif /* CONFIG_HAVE_EMMC */
@@ -2392,20 +1801,6 @@ static void nand_uboot(u32 type)
 	u32 blk_use_sz = g_bootinfo.sys_nand.u16PageNoPerBlk * sect_sz;
 #endif
 
-#if defined(PLATFORM_Q645)
-	int i;
-
-	// SPI-NAND,X1 (GPIO): 16, 17, 18, 19, 20, 21
-	// SPI-NAND,X2 (GPIO):  6,  7,  8,  9, 10, 11
-	// Set driving strength of following pins to 3 (min: 8.8mA, typ: 11.5mA).
-	if (get_spi_nand_pinmux() == 2)
-		for (i = 6; i <= 11; i++)
-			set_pad_driving_strength(i, 3);
-	else
-		for (i = 16; i <= 21; i++)
-			set_pad_driving_strength(i, 3);
-	delay_1ms(1);
-#elif defined(PLATFORM_SP7350)
 	int i;
 
 	if (type == SPINAND_BOOT) {
@@ -2434,7 +1829,6 @@ static void nand_uboot(u32 type)
 			set_pad_driving_strength(i, 4);
 	}
 	delay_1ms(1);
-#endif
 
 #ifdef CONFIG_STANDALONE_DRAMINIT
 	if (ReadBootBlockDraminit((type == SPINAND_BOOT), (u8 *)DRAMINIT_LOAD_ADDR) < 0) {
@@ -2499,7 +1893,6 @@ static void nand_uboot(u32 type)
 	}
 #endif
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350) /* load fip image */
 	blk_start = (NAND_FIP_OFFSET + blk_use_sz - 1) / blk_use_sz / 2;
 
 	hdr = (struct image_header *)FIP_LOAD_ADDR;
@@ -2509,7 +1902,6 @@ static void nand_uboot(u32 type)
 		prn_string("not found fip\n");
 		return;
 	}
-#endif
 	boot_uboot();
 }
 
@@ -2570,7 +1962,6 @@ void custom_boot_flags( void) {
 #endif
 }
 
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 static u32 read_hw_boot_mode(void)
 {
 	u32 mode;
@@ -2578,7 +1969,6 @@ static u32 read_hw_boot_mode(void)
 	mode = *(volatile unsigned int *)HW_CFG_REG;
 	return (mode & HW_CFG_MASK) >> HW_CFG_SHIFT;
 }
-#endif
 
 /*
  * boot_flow - Top boot flow logic
@@ -2605,9 +1995,7 @@ static void boot_flow(void)
 #ifdef OTP_TEST
 	prn_string("OTP DATA\n");
 	for (i = 0; i < 128; i++) {
-	#if defined(PLATFORM_SP7350)
 		if (i < 64) {
-	#endif
 			if (!otprx_read(HB_GP_REG, SP_OTPRX_REG, i, &buf)) {
 				if ((i % 4) == 0) {
 					prn_string("OTP"); prn_decimal(i / 4); prn_string(" = ");
@@ -2621,7 +2009,6 @@ static void boot_flow(void)
 					prn_dword(data);
 				}
 			}
-	#if defined(PLATFORM_SP7350)
 		}
 		else if ((i >= 64) && (i < 128)) {
 			if (!otprx_key_read(OTP_KEY_REG, SP_OTPRX_REG, i, &buf)) {
@@ -2638,7 +2025,6 @@ static void boot_flow(void)
 				}
 			}
 		}
-	#endif
 	}
 #endif
 
@@ -2650,17 +2036,10 @@ static void boot_flow(void)
 
 	// NOR pins are enabled by hardware.
 	// Release them if boot device is not NOR.
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
 	if ((g_bootinfo.gbootRom_boot_mode != SPI_NOR_BOOT) &&
 	    (read_hw_boot_mode() & INT_BOOT)){
 		set_spi_nor_pinmux(0);
 	}
-#else
-	if ((g_bootinfo.gbootRom_boot_mode != SPI_NOR_BOOT) &&
-	    (g_bootinfo.gbootRom_boot_mode != EXT_BOOT)) {
-		set_spi_nor_pinmux(0);
-	}
-#endif
 
 	/* coverity[no_escape] */
 	while (retry-- > 0) {
@@ -2715,27 +2094,6 @@ static void boot_flow(void)
 static void init_uart(void)
 {
 #ifndef CONFIG_DEBUG_WITH_2ND_UART
-#ifdef PLATFORM_Q628
-	/* uart1 pinmux : x1,UA1_TX, X2,UA1_RX */
-	MOON3_REG->sft_cfg[14] = RF_MASK_V((0x7f << 0), (1 << 0));
-	MOON3_REG->sft_cfg[14] = RF_MASK_V((0x7f << 8), (2 << 8));
-	MOON0_REG->reset[1] = RF_MASK_V_CLR(1 << 9); // UA1_RESET=0
-	UART1_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UART1_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-#endif
-#ifdef PLATFORM_Q645
-	/* uart1 pinmux : UA1_TX, UA1_RX */
-	MOON1_REG->sft_cfg[1] = RF_MASK_V_SET(1 << 9); // UA1_SEL=1
-	MOON0_REG->reset[3] = RF_MASK_V_CLR(1 << 0);   // UA1_RESET=0
-	UART1_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UART1_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-	MOON1_REG->sft_cfg[1] = RF_MASK_V_SET(1 << 12); // UADBG_SEL=1
-	MOON0_REG->reset[3] = RF_MASK_V_CLR(1 << 5);    // UADBG_RESET=0
-	UADBG_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UADBG_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-	UA2AXI_REG->axi_en = 0; // Disable UA2AXI and enable UADBG.
-#endif
-#if defined(PLATFORM_SP7350)
 	/* uart6 pinmux : UA6_TX, UA6_RX  used for CM4 debug message  */
 	MOON1_REG_AO->sft_cfg[3] = RF_MASK_V((3 << 0), (1 << 0)); // UA6_SEL=1
 	MOON0_REG_AO->reset[7] = RF_MASK_V_CLR(1 << 12);          // UA6_RESET=0
@@ -2756,21 +2114,6 @@ static void init_uart(void)
 	MOON1_REG_AO->sft_cfg[2] = RF_MASK_V_SET(1 << 14); /* UADBG_SEL=1 */
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 10);   // UADBG_RESET=0
 	UA2AXI_REG->axi_en = 0; // Disable UA2AXI and enable UADBG.
-#endif
-#endif
-#ifdef PLATFORM_I143
-	/* uart1 pinmux : UA1_TX, UA1_RX */
-	MOON1_REG->sft_cfg[1] = RF_MASK_V_SET(1 << 12); /* UA1_SEL=1 */
-	MOON0_REG->reset[1] = RF_MASK_V_CLR(1 << 9);	/* UA1_RESET=0 */
-	MOON0_REG->reset[1] = RF_MASK_V_CLR(1 << 15);	/* UADMA_RESET=0 */
-	MOON0_REG->reset[1] = RF_MASK_V_CLR(1 << 13);	/* BUF_UA_RESET=0 */
-	UART1_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UART1_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-	UART1_REG->dr = 'U';
-	UART1_REG->dr = 'A';
-	UART1_REG->dr = 'R';
-	UART1_REG->dr = 'T';
-	UART1_REG->dr = '1';
 #endif
 #endif
 }
@@ -2797,7 +2140,6 @@ static u32 read_mp_bit(void)
 	return mp_bit;
 }
 
-#if defined(PLATFORM_SP7350)
 void check_ldo(void)
 {
 	char data = 0;
@@ -2814,7 +2156,6 @@ void check_ldo(void)
 	if(data & 0x01)
 		*(volatile u32 *)(0xf88032dc) |= 0x00000004;		//SDIO LDO resistor mod
 }
-#endif
 
 void xboot_main(void)
 {
@@ -2831,9 +2172,6 @@ void xboot_main(void)
 	prn_decimal_ln(AV1_GetStc32());
 	/* first msg */
 	prn_string("+++xBoot " __DATE__ " " __TIME__ "\n");
-#if defined(PLATFORM_Q628) && (CONFIG_PLATFORM_IC_REV < 2)
-	prn_string("NOTICE: this xboot works with ROM_CODE v1.0\n");
-#endif
 
 	/* init hw */
 	init_hw();
@@ -2844,9 +2182,7 @@ void xboot_main(void)
 
 #ifdef CONFIG_HAVE_OTP
 	mon_rw_otp();
-#if defined(PLATFORM_SP7350)
 	check_ldo();
-#endif
 #endif
 
 #if 0 // Enable CPIO master mode.
