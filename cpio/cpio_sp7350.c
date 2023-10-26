@@ -1274,47 +1274,58 @@ void cpio_slave(void)
 
 #if 0
 	prn_string("VCO: 3.2G, PLL: 0.4G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BCF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90000000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xFF330823;
-	cpior_reg->AFE_CTL[7] = 0x00005008;
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xFF330823;	// AFE_CTL6, POSTDIV = 3, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x20, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
+#endif
+#if 0
+	prn_string("VCO: 3.2G, PLL: 0.8G\n");
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xDF330823;	// AFE_CTL6, POSTDIV = 2, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x20, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 1
-	prn_string("VCO: 3.2G, PLL: 0.8G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BEF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90000000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xDF330B23;
-	cpior_reg->AFE_CTL[7] = 0x00005208;
+	prn_string("VCO: 4.0G, PLL: 1.0G\n");
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xDF330A23;	// AFE_CTL6, POSTDIV = 2, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x28, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 0
 	prn_string("VCO: 5.0G, PLL: 1.25G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BCF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90081000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xDF330CA3;
-	cpior_reg->AFE_CTL[7] = 0x00005008;
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xDF330CA3;	// AFE_CTL6, POSTDIV = 2, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x32, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 0
 	prn_string("VCO: 3.2G, PLL: 1.6G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BCF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90000000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xBF330823;
-	cpior_reg->AFE_CTL[7] = 0x00005000;
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xBF330823;	// AFE_CTL6, POSTDIV = 1, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x20, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 0
 	prn_string("VCO: 9.6G, PLL: 2.4G\n");
@@ -1419,47 +1430,58 @@ void cpio_master(void)
 
 #if 0
 	prn_string("VCO: 3.2G, PLL: 0.4G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BCF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90000000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xFF330823;
-	cpior_reg->AFE_CTL[7] = 0x00005008;
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xFF330823;	// AFE_CTL6, POSTDIV = 3, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x20, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
+#endif
+#if 0
+	prn_string("VCO: 3.2G, PLL: 0.8G\n");
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xDF330823;	// AFE_CTL6, POSTDIV = 2, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x20, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 1
-	prn_string("VCO: 3.2G, PLL: 0.8G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BEF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90000000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xDF330B23;
-	cpior_reg->AFE_CTL[7] = 0x00005208;
+	prn_string("VCO: 4.0G, PLL: 1.0G\n");
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xDF330A23;	// AFE_CTL6, POSTDIV = 2, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x28, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 0
 	prn_string("VCO: 5.0G, PLL: 1.25G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BCF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90081000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xDF330CA3;
-	cpior_reg->AFE_CTL[7] = 0x00005008;
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xDF330CA3;	// AFE_CTL6, POSTDIV = 2, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x32, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 0
 	prn_string("VCO: 3.2G, PLL: 1.6G\n");
-	cpior_reg->AFE_CTL[0] = 0x240183FA;
-	cpior_reg->AFE_CTL[1] = 0x2527BCF9;
-	cpior_reg->AFE_CTL[2] = 0x00000000;
-	cpior_reg->AFE_CTL[3] = 0x90000000;
-	cpior_reg->AFE_CTL[4] = 0x000000E4;
-	cpior_reg->AFE_CTL[5] = 0x00004801;
-	cpior_reg->AFE_CTL[6] = 0xBF330823;
-	cpior_reg->AFE_CTL[7] = 0x00005000;
+	cpior_reg->AFE_CTL[0] = 0x240103FA;	// AFE_CTL0, TXDRVI_CK = 9, SEL_EXT = 1
+	cpior_reg->AFE_CTL[1] = 0x2527BCF9;	// AFE_CTL1, RX_DA_RT = 0x12 (R50), RX_CK_RT = 0x12 (R50), TX_DA_RT = 0xF (R100), TX_CK_RT = 0xF (R100), TXDRVIPRE_DA = F, TXDRVI_DA = 9
+	cpior_reg->AFE_CTL[2] = 0x00000000;	// AFE_CTL2
+	cpior_reg->AFE_CTL[3] = 0x90000000;	// AFE_CTL3, RXCK_EQ1_TC = 4, RXCK_EQ0_TC = 4, EN_RXDA_EQ1 = 0, EN_RXDA_EQ0 = 0
+	cpior_reg->AFE_CTL[4] = 0x00000024;	// AFE_CTL4, VREF_SEL = 0 (BG), RXDA_EQ1_TC = 4, RXDA_EQ0_TC = 4
+	cpior_reg->AFE_CTL[5] = 0x00004801;	// AFE_CTL5, IRX_ADJ = 4 (25u, 50u), IRX_SEL = 0 (VREF), ITX_ADJ = 4 (50u), ITX_SEL = 0 (VREF), IREF_R_TRIM = 0 (8.03k),  BG_DEC = 0 (400mV), EN_BG = 1
+	cpior_reg->AFE_CTL[6] = 0xBF330823;	// AFE_CTL6, POSTDIV = 1, LPFCP = 3, CPFCS = 3, LPFRS = 2, ICH = 3, FREERUN = 1, BNKSEL = 4, FBKDIV = 0x20, PRESCAL = 2, PREDIV = 0, RST_N_TXPLL = 1, EN_TXPLL = 1
+	cpior_reg->AFE_CTL[7] = 0x00004000;	// AFE_CTL7, TXPLL_EN_OP = 1
 #endif
 #if 0
 	prn_string("VCO: 9.6G, PLL: 2.4G\n");
