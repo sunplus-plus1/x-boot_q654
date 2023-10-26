@@ -66,7 +66,7 @@
 /* ISP image offset */
 #define ISP_IMG_OFF_XBOOT    (0)
 #define ISP_IMG_OFF_UBOOT    (192 * 1024)
-#define ISP_IMG_OFF_HEADER   (1*1024*1024)
+#define ISP_IMG_OFF_HEADER   (1536*1024)
 
 //
 // ABIO config
