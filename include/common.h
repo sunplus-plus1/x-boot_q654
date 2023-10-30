@@ -18,7 +18,7 @@
 #endif
 #include <nand_boot/nfdriver.h>
 #include <hal/hal_cache.h>
-#include <spinand_boot/sp_spinand_q645.h>
+#include <spinand_boot/sp_spinand.h>
 #include <paranand_boot/para_nand_hal.h>
 #include <sdmmc_boot/hal_sd_mmc.h>
 #include <romvsr.h>

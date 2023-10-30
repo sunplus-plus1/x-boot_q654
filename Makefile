@@ -225,7 +225,7 @@ endif
 
 # Generic Boot Device
 ifeq ($(CONFIG_HAVE_NAND_COMMON), y)
-CSOURCES += nand/nandop.c nand/bch_q645.c
+CSOURCES += nand/nandop.c nand/bch.c
 endif
 
 # mmu
@@ -242,7 +242,7 @@ endif
 
 # SPI NAND
 ifeq ($(CONFIG_HAVE_SPI_NAND), y)
-CSOURCES += nand/spi_nand_q645.c
+CSOURCES += nand/spi_nand.c
 endif
 
 # FAT
