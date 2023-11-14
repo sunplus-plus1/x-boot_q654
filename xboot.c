@@ -264,6 +264,13 @@ static void init_hw(void)
 	set_pad_driving_strength(20, 5);
 	for (i = 28; i <= 36; i++)
 		set_pad_driving_strength(i, 5);
+	#if 0//for HS400
+	set_pad_driving_strength(20, 10);
+	for (i = 28; i <= 36; i++)
+		set_pad_driving_strength(i, 10);
+	set_pad_driving_strength(37, 10);//data strobe
+	prn_string("HS400 DS=10\n");
+	#endif
 
 	// I2C0,X1 (DVIO): 68, 69
 	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
