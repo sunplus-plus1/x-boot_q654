@@ -363,9 +363,17 @@ static void init_hw(void)
 
 	MOON4_REG_AO->sft_cfg[1] = RF_MASK_V_SET(0x80);                   // U3PHY SSC on
 
-#if 0 // CPIO analog macro mux
-	/* Switch the shared analog macros to MIPI RX mode for MIPI-CSI RX2/3 */
+#if 0 // For C3V-W MIPI-CSI RX2/3
+	/* Switch the shared analog macro to MIPI RX mode for MIPI-CSI RX2/3 */
 	MOON4_REG_AO->sft_cfg[23] = RF_MASK_V((1 << 3), (1 << 3));
+
+	#if 1
+	/* This workaround is for MIPI-CSI RX3 malfunction issue. Enabling the BIST
+	 * internal clock of MIPI-CSI RX2 port releases the reset of MIPI-CSI RX3
+	 * port.
+	 */
+	*(volatile u32 *)0xf800539c = 0x00020003;		// BIST_INCLK_EN(G167.7[17])
+	#endif
 #endif
 
 	*(volatile u32 *)ARM_TSGEN_WR_BASE = 3;          // EN = 1 and HDBG = 1
