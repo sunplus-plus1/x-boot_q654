@@ -2205,7 +2205,9 @@ void xboot_main(void)
 #endif
 
 #ifdef CONFIG_HAVE_OTP
+#ifdef CONFIG_HAVE_OTP_HS
 	mon_rw_otp();
+#endif
 	check_ldo();
 #endif
 

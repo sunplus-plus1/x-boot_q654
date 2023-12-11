@@ -278,6 +278,9 @@ endif
 # OTP
 ifeq ($(CONFIG_HAVE_OTP), y)
 CSOURCES += otp/sp_otp.c
+endif
+
+ifeq ($(CONFIG_HAVE_OTP_HS), y)
 CSOURCES += otp/mon_rw_otp.c
 endif
 

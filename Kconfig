@@ -123,6 +123,12 @@ config HAVE_USB3_HUB
 config HAVE_OTP
 	bool "OTP driver"
 
+config HAVE_OTP_HS
+	bool "OTP driver handshake"
+	select HAVE_OTP
+	help
+	   Enable OTP handshake.
+
 config HAVE_MMC
 	bool "MMC common"
 	help
