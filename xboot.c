@@ -2123,17 +2123,6 @@ static void init_uart(void)
 	MOON0_REG_AO->reset[7] = RF_MASK_V_CLR(1 << 12);          // UA6_RESET=0
 	UART6_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
 	UART6_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-#if 0	// Enable UADBG for OP-TEE console.
-	// OP-TEE uses UADBG as console by default. Enable this conditional
-	// to enable pin-mux and settings of UADBG when needed.
-	// Note that UADBG and GMAC share the same pins. Disable GMAC in dts
-	// before enable pin-mux of UADBG or vice versa.
-	MOON1_REG_AO->sft_cfg[2] = RF_MASK_V_SET(1 << 14); /* UADBG_SEL=1 */
-	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 10);   // UADBG_RESET=0
-	UADBG_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UADBG_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-	UA2AXI_REG->axi_en = 0; // Disable UA2AXI and enable UADBG.
-#endif
 #if 0	// Enable UADBG for Linux ttyS5
 	MOON1_REG_AO->sft_cfg[2] = RF_MASK_V_SET(1 << 14); /* UADBG_SEL=1 */
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 10);   // UADBG_RESET=0

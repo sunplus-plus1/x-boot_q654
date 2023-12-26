@@ -55,14 +55,6 @@ void restore_save_data()
 	*(volatile u32 *)(0xf8c40110 + 0x20 * TZC_REGION_ID) = 0xc000000f;			// ATTR: secure access enable
 	*(volatile u32 *)(0xf8c40114 + 0x20 * TZC_REGION_ID) = 0x00000000;			// ID_ACCESS disable
 
-#if 0	// Enable UADBG for OP-TEE console.
-	// OP-TEE uses UADBG as console by default. Enable this conditional
-	// to enable pin-mux and settings of UADBG for resuming from
-	// deep sleep.
-	UADBG_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UADBG_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
-	UA2AXI_REG->axi_en = 0; // Disable UA2AXI and enable UADBG.
-#endif
 #if 0	// Enable UADBG for Linux ttyS5
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 10);	// UADBG_RESET=0
 	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 10);	// UADBG_CLKEN=1
