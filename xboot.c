@@ -385,8 +385,8 @@ static void init_hw(void)
 	PAD_CTL2_REG->gmac_softpad_ctrl[1] = 0x80000000; // GMAC RXC softpad (G102.31) = 0x80000000, Set RXC to GPIO mode
 	MOON3_REG_AO->clkgen[0] = RF_MASK_V_CLR(0x1000); // GMAC_PHYSEL (G3.23[12]) = 0, Set GMAC to use RGMII interface.
 #else // RMII interface
-	PAD_CTL2_REG->gmac_softpad_ctrl[0] = 0x00046000; // GMAC TXC softpad (G102.30) = 0x00046000, Set TXC to softpad, delay -8 nS
-	PAD_CTL2_REG->gmac_softpad_ctrl[1] = 0x00046000; // GMAC RXC softpad (G102.31) = 0x00046000, Set RXC to softpad, delay -8 nS
+	PAD_CTL2_REG->gmac_softpad_ctrl[0] = 0x00046000; // GMAC TXC softpad (G102.30) = 0x00046000, Set TXC to softpad, delay -2 nS
+	PAD_CTL2_REG->gmac_softpad_ctrl[1] = 0x00000000; // GMAC RXC softpad (G102.31) = 0x00046000, Set RXC to softpad, delay 0 nS
 	MOON3_REG_AO->clkgen[0] = RF_MASK_V_SET(0x1000); // GMAC_PHYSEL (G3.23[12]) = 1, Set GMAC to use RMII interface.
 #endif
 
