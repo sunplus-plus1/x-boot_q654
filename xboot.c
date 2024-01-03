@@ -153,6 +153,11 @@ static void init_hw(void)
 
 	u8 buf[2];
 
+	// I2C7,X1 (GPIO): 86, 87
+	// Set driving strength to 6 (min: 6.8mA, typ: 9.9mA).
+	set_pad_driving_strength(86, 6);
+	set_pad_driving_strength(87, 6);
+
 	// Initialize I2C7.
 	sp_i2c_en(RT5759_I2C_CH, I2C_PIN_MODE0);
 	_delay_1ms(1);
@@ -200,146 +205,6 @@ static void init_hw(void)
 	/* reset stc config because AO sysclk is change from 25M to 200M */
 	STC_init();
 	AV1_STC_init();
-
-	// SD-CARD (DVIO): 38, 39, 40, 41, 42, 43
-	// SDIO    (DVIO): 44, 45, 46, 47, 48, 49
-	// Set driving-strength to 5 (min: 6.5, typ: 17.7mA).
-	for (i = 38; i <= 43; i++)
-		set_pad_driving_strength(i, 5);
-	for (i = 44; i <= 49; i++)
-		set_pad_driving_strength(i, 5);
-
-	#if (0)
-	// SPI0,X1 (DVIO): 64, 65, 66, 67
-	// Set driving-strength to 4 (min: 5.6mA, typ:15.2mA).
-	for (i = 64; i <= 67; i++)
-		set_pad_driving_strength(i, 4);
-
-	// SPI1,X1 (GPIO): 80, 81, 82, 83
-	// Set driving-strength to 9 (min: 10.2, typ:14.8mA).
-	for (i = 80; i <= 83; i++)
-		set_pad_driving_strength(i, 9);
-
-	// SPI2,X1 (GPIO): 88, 89, 90, 91
-	// Set driving-strength to 9 (min: 10.2, typ:14.8mA).
-	for (i = 88; i <= 91; i++)
-		set_pad_driving_strength(i, 9);
-
-	// SPI3,X2 (DVIO): 52, 53, 54, 55
-	// Set driving-strength to 4 (min: 5.6mA, typ:15.2mA).
-	for (i = 52; i <= 55; i++)
-		set_pad_driving_strength(i, 4);
-
-	// SPI4,X1 (DVIO): 72, 73, 74, 75
-	// Set driving-strength to 4 (min: 5.6mA, typ:15.2mA).
-	for (i = 72; i <= 75; i++)
-		set_pad_driving_strength(i, 4);
-	#endif
-
-	// GMAC (GPIO): TXD0(7), TXD1(8), TXC(10), TXEN(11), TXD2(15), TXD3(16)
-	// Set driving strength to 10 (min: 11.3mA, typ: 16.4mA).
-	set_pad_driving_strength(7, 10);
-	set_pad_driving_strength(8, 10);
-	set_pad_driving_strength(10, 10);
-	set_pad_driving_strength(11, 10);
-	set_pad_driving_strength(15, 10);
-	set_pad_driving_strength(16, 10);
-
-	// GMAC (GPIO): RXC(3), RXDV(4), RXD0(5), RXD1(6), RXD2(13), RXD3(14)
-	// Set driving strength to 5 (min: 5.7mA, typ: 8.2mA).
-	set_pad_driving_strength(3, 5);
-	set_pad_driving_strength(4, 5);
-	set_pad_driving_strength(5, 5);
-	set_pad_driving_strength(6, 5);
-	set_pad_driving_strength(13, 5);
-	set_pad_driving_strength(14, 5);
-
-	// GMAC (GPIO): MDC(9), MDIO(12)
-	// Set driving strength to 5 (min: 5.7mA, typ: 8.2mA).
-	set_pad_driving_strength(9, 5);
-	set_pad_driving_strength(12, 5);
-
-	// eMMC (DVIO): 28, 29, 30, 31, 32, 33, 34, 35, 36
-	// Set driving-strength to 5 (min: 6.5mA, typ:17.7mA).
-	set_pad_driving_strength(20, 5);
-	for (i = 28; i <= 36; i++)
-		set_pad_driving_strength(i, 5);
-	#if 0//for HS400
-	set_pad_driving_strength(20, 10);
-	for (i = 28; i <= 36; i++)
-		set_pad_driving_strength(i, 10);
-	set_pad_driving_strength(37, 10);//data strobe
-	prn_string("HS400 DS=10\n");
-	#endif
-
-	// I2C0,X1 (DVIO): 68, 69
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(68, 4);
-	set_pad_driving_strength(69, 4);
-
-	// I2C1,X1 (DVIO): 70, 71
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(70, 4);
-	set_pad_driving_strength(71, 4);
-
-	// I2C2,X1 (DVIO): 76, 77
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(76, 4);
-	set_pad_driving_strength(77, 4);
-
-	// I2C3    (GPIO): 88, 89
-	// Set driving strength to 6 (min: 6.8mA, typ: 9.9mA).
-	set_pad_driving_strength(88, 6);
-	set_pad_driving_strength(89, 6);
-
-	// I2C6,X1 (GPIO): 84, 85
-	// Set driving strength to 10 (min: 11.3mA, typ: 16.4mA).
-	set_pad_driving_strength(84, 10);
-	set_pad_driving_strength(85, 10);
-
-	// I2C7,X1 (GPIO): 86, 87
-	// Set driving strength to 6 (min: 6.8mA, typ: 9.9mA).
-	set_pad_driving_strength(86, 6);
-	set_pad_driving_strength(87, 6);
-
-	// UA0,X1 (DVIO): 50, 51
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(50, 4);
-	set_pad_driving_strength(51, 4);
-
-	// UA1,X1 (DVIO): 52, 53, 54, 55
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(52, 4);
-	set_pad_driving_strength(53, 4);
-	set_pad_driving_strength(54, 4);
-	set_pad_driving_strength(55, 4);
-
-	// UA2,X1 (DVIO): 56, 57, 58, 59
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(56, 4);
-	set_pad_driving_strength(57, 4);
-	set_pad_driving_strength(58, 4);
-	set_pad_driving_strength(59, 4);
-
-	// UA3,X1 (DVIO): 62, 63
-	// Set driving strength to 4 (min: 5.6mA, typ: 15.2mA).
-	set_pad_driving_strength(62, 4);
-	set_pad_driving_strength(63, 4);
-
-	// UADBG,X1 (GPIO): 13, 14
-	// Set driving strength to 4 (min: 4.5mA, typ: 6.6mA).
-	set_pad_driving_strength(13, 4);
-	set_pad_driving_strength(14, 4);
-
-	// UA6,X1 (GPIO): 80, 81
-	// Set driving strength to 4 (min: 4.5mA, typ: 6.6mA).
-	set_pad_driving_strength(80, 4);
-	set_pad_driving_strength(81, 4);
-	// UA7,X1 (GPIO): 82, 83
-	// Set driving strength to 4 (min: 4.5mA, typ: 6.6mA).
-	set_pad_driving_strength(82, 4);
-	set_pad_driving_strength(83, 4);
-	delay_1ms(1);
 
 	/* Set PLLC to 1.5G */
 	prn_string("Set PLLC to 1.5GHz\n");
