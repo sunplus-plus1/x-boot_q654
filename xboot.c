@@ -255,11 +255,12 @@ static void init_hw(void)
 	MOON3_REG_AO->clkgen[0] = RF_MASK_V_SET(0x1000); // GMAC_PHYSEL (G3.23[12]) = 1, Set GMAC to use RMII interface.
 #endif
 
+	//Cancel below action to let Linux kernel control the NPU power when system start up.
 	// Turn on power of NPU (NPU_PWR_EN, GPIO65).
-	GPIO_MASTER_REG->gpio_master[65 / 16] = 0x10001 << (65 % 16);
-	GPIO_OUT_REG->gpio_out[65 / 16]       = 0x10001 << (65 % 16);
-	GPIO_OE_REG->gpio_oe[65 / 16]         = 0x10001 << (65 % 16);
-	PAD_CTL_REG->gpio_first[65 / 32]     |=       1 << (65 % 32);
+	//GPIO_MASTER_REG->gpio_master[65 / 16] = 0x10001 << (65 % 16);
+	//GPIO_OUT_REG->gpio_out[65 / 16]       = 0x10001 << (65 % 16);
+	//GPIO_OE_REG->gpio_oe[65 / 16]         = 0x10001 << (65 % 16);
+	//PAD_CTL_REG->gpio_first[65 / 32]     |=       1 << (65 % 32);
 
 	// Turn on power of Video codec (VV_PWR_EN, GPIO66).
 	GPIO_MASTER_REG->gpio_master[66 / 16] = 0x10001 << (66 % 16);
