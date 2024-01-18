@@ -10,12 +10,10 @@ endif
 CPU_PATH = arm/sp7350
 
 ###########  Toolchain path ######################
-ifneq ($(CROSS),)
 CC = $(CROSS)gcc
 CPP = $(CROSS)cpp
 OBJCOPY = $(CROSS)objcopy
 OBJDUMP = $(CROSS)objdump
-endif
 
 ###########  LDFLAGS CONFIG ######################
 LD_GEN   = arch/$(CPU_PATH)/boot.ld

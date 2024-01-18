@@ -3,14 +3,12 @@ sinclude ../.config
 OUT     = ./
 XBOOT_NAME = xboot
 
-CROSS_COMPILE    ?= ../../../../crossgcc/gcc-arm-9.2-2019.12-x86_64-arm-none-eabi/bin/arm-none-eabi-
+WARMBOOT_CROSS  ?= ../../../../crossgcc/gcc-arm-9.2-2019.12-x86_64-arm-none-eabi/bin/arm-none-eabi-
 
-ifneq ($(CROSS_COMPILE),)
-GCC = $(CROSS_COMPILE)gcc
-CPP = $(CROSS_COMPILE)cpp
-OBJCOPY = $(CROSS_COMPILE)objcopy
-OBJDUMP = $(CROSS_COMPILE)objdump
-endif
+GCC = $(WARMBOOT_CROSS)gcc
+CPP = $(WARMBOOT_CROSS)cpp
+OBJCOPY = $(WARMBOOT_CROSS)objcopy
+OBJDUMP = $(WARMBOOT_CROSS)objdump
 
 XBOOT_CFLAGS  += -Os -Wall -g -nostdlib -fno-builtin -I../../include -I../../ext_config
 XBOOT_CFLAGS  += -march=armv8-a
