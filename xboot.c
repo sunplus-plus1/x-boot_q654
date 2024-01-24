@@ -142,8 +142,15 @@ static void init_hw(void)
 	for (i = 0; i < sizeof(MOON0_REG_AO->reset) / 4; i++)
 		MOON0_REG_AO->reset[i] = RF_MASK_V_CLR(0xffff);
 
+	#if defined(CONFIG_MT53E2G32D4_C)
+	// Remap DRAM (0xf0000000 ~ 0xffffffff) to (0x300000000 ~ 0x30fffffff).
+	MOON5_REG->sft_cfg[0] = RF_MASK_V((1 << 1), (1 << 1)); //for 8GB
+	prn_string("Remap DRAM for 8GB\n");
+	#else
 	// Remap DRAM (0xf0000000 ~ 0xffffffff) to (0x100000000 ~ 0x10fffffff).
-	MOON5_REG->sft_cfg[0] = RF_MASK_V((1 << 0), (1 << 0));
+	MOON5_REG->sft_cfg[0] = RF_MASK_V((1 << 0), (1 << 0)); //for 4GB
+	prn_string("Remap DRAM for 4GB\n");
+	#endif
 
 	#if !defined(CONFIG_BOOT_ON_CSIM) && !defined(CONFIG_BOOT_ON_ZEBU)
 	// Set CA55 power (VDD_CA55) to 0.8V.

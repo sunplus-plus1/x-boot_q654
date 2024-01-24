@@ -50,6 +50,12 @@ config MT53E1G32D2_B
 	bool "MT53E1G32D2_B D8CJG"
 	help
 	  Micron MT53E1G32D2_B, 1Gbx32, 2 rank, FBGA code = D8CJG
+config MT53E2G32D4_C
+	depends on LPDDR4
+	bool "MT53E2G32D4_C D8CJN"
+	help
+	  Micron MT53E2G32D4_C, 1Gbx32, 2 rank, FBGA code = D8CJN
+	  MT53E2G32D4_C
 config MT40A512M16TB
 	depends on DDR4
 	bool "MT40A512M16TB D8BPK"
