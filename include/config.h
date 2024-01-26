@@ -294,5 +294,5 @@
 #define NUM_OF_PARTITION        (111)
 #define ISP_FILEINFO_OFFSET     (0x880)
 #define EMMC_FIP_LBA            0x1022
-#define NAND_FIP_OFFSET         (0x400000)
+#define NAND_FIP_OFFSET         (0x600000)
 
