@@ -151,7 +151,7 @@ static void init_hw(void)
 	MOON5_REG->sft_cfg[0] = RF_MASK_V((1 << 0), (1 << 0)); //for 4GB
 	prn_string("Remap DRAM for 4GB\n");
 	#endif
-
+#if defined(CONFIG_REGULATOR_RT5759)
 	#if !defined(CONFIG_BOOT_ON_CSIM) && !defined(CONFIG_BOOT_ON_ZEBU)
 	// Set CA55 power (VDD_CA55) to 0.8V.
 	// RT5759 is connected to I2C7 and its I2C address is 0x62.
@@ -181,6 +181,23 @@ static void init_hw(void)
 		_delay_1ms(1);
 	}
 	#endif
+#elif defined(CONFIG_REGULATOR_STI8070X)
+	// Set CA55 power (VDD_CA55) to 0.8V.
+	// STI8070C is connected to I2C7 and its I2C address is 0x60.
+	#define STI8070X_I2C_CH   7
+	#define STI8070X_I2C_ADDR 0x60
+
+	//u8 buf[2];
+
+	// I2C7,X1 (GPIO): 86, 87
+	// Set driving strength to 6 (min: 6.8mA, typ: 9.9mA).
+	set_pad_driving_strength(86, 6);
+	set_pad_driving_strength(87, 6);
+
+	// Initialize I2C7.
+	sp_i2c_en(STI8070X_I2C_CH, I2C_PIN_MODE0);
+	_delay_1ms(1);
+#endif
 
 	#if (0)
 	u32 adc_buf[4];

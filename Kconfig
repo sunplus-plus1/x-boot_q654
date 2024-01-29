@@ -244,3 +244,15 @@ config SECURE_BOOT_SIGN
 	  Sign xboot image and append generated signature to it.
 	  If IC OTP secure boot bit is enabled, ROM code only boots
 	  signed xboot image.
+
+config REGULATOR_RT5759
+	bool "Richtek RT5759 Regulator"
+	depends on HAVE_I2C
+	help
+	  This adds support for voltage regulator Richtek RT5759.
+
+config REGULATOR_STI8070X
+	bool "TOLL Microelectronic STI8070x Regulators"
+	depends on HAVE_I2C
+	help
+	  This adds support for voltage regulator STI8070x series.
