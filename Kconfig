@@ -256,3 +256,9 @@ config REGULATOR_STI8070X
 	depends on HAVE_I2C
 	help
 	  This adds support for voltage regulator STI8070x series.
+
+config AP6256_WL_REG_ON_GPIO56
+	bool "Enable AP6256 WL_REG_ON control using GPIO56"
+	help
+	  Say "y" if you want to control WL_REG_ON signal using
+	  GPIO56.
