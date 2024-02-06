@@ -166,6 +166,132 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 		}
 }
 
+void sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *data_buf ,unsigned int len,enum sp_i2c_speed speed)
+{
+
+        unsigned int temp_reg;
+        unsigned int xfer_cnt;
+        unsigned int xfer_wait;
+        u32 stat;
+
+	volatile struct dw_i2c_regs *i2c_regs = i2c_mas_ctlr[i2c_no].reg;
+	//diag_printf("i2c_regs %x\n",i2c_regs);
+	//printf("i2cread\n");
+	//printf("i2c_no : %d, slave_addr: 0x%x , len %d\n", i2c_no, slave_addr,len);
+	//printf("sp_i2c_read 0x%x 0x%x\n",i2c_regs,i2c_mas_ctlr[i2c_no].reg_adr);
+	i2c_mas_ctlr[i2c_no].buf = data_buf;
+	i2c_mas_ctlr[i2c_no].DataIndex = 0;
+	i2c_mas_ctlr[i2c_no].Abort_Source =  0;
+	i2c_mas_ctlr[i2c_no].DataTotalLen = len;
+	i2c_mas_ctlr[i2c_no].ReadTxlen = len;
+	i2c_mas_ctlr[i2c_no].RxOutStanding = 0;
+	i2c_mas_ctlr[i2c_no].xfet_action = 1;
+
+	i2c_regs->ic_tx_tl = I2C_TX_FIFO_DEPTH / 2;
+	i2c_regs->ic_rx_tl = 0;
+
+        temp_reg = SP_IC_CON_MASTER | SP_IC_CON_SLAVE_DISABLE | SP_IC_CON_RESTART_EN;
+	if(speed == SP_I2C_SPEED_FAST)
+		temp_reg |= SP_IC_CON_SPEED_FAST;
+	else
+		temp_reg |= SP_IC_CON_SPEED_STD;
+
+	MOON3_REG_AO->clkgen[4] = RF_MASK_V((0x03 << 6), (0x00 << 6));  // set i2c source clk 100M
+	i2c_regs->ic_ss_scl_hcnt = 397;
+	i2c_regs->ic_ss_scl_lcnt = 496;
+	i2c_regs->ic_fs_scl_hcnt = 57;
+	i2c_regs->ic_fs_scl_lcnt = 129;
+
+	i2c_regs->ic_con = temp_reg;
+	i2c_regs->ic_tar = slave_addr;
+	i2c_regs->ic_enable = 1;
+
+	temp_reg = i2c_regs->ic_enable_status;
+	temp_reg = i2c_regs->ic_clr_intr;
+
+	temp_reg = SP_IC_INTR_DEFAULT_MASK | SP_IC_INTR_MASTER_MASK;
+	i2c_regs->ic_intr_mask = temp_reg;
+
+	stat = i2c_sp_read_clear_intrbits(i2c_no , i2c_regs);
+
+	i2c_regs->ic_data_cmd = reg_addr;
+	while(i2c_mas_ctlr[i2c_no].DataTotalLen)
+	{
+		xfer_cnt = I2C_TX_FIFO_DEPTH - i2c_regs->ic_txflr;
+		while(xfer_cnt >0 && i2c_mas_ctlr[i2c_no].DataTotalLen > 0)
+		{
+			i2c_regs->ic_data_cmd = I2C_READ_TX_DATA;
+			i2c_mas_ctlr[i2c_no].DataTotalLen--;
+			xfer_cnt--;
+		}
+		stat = i2c_regs->ic_status;
+		xfer_wait = 0;
+		while((stat & SP_IC_STATUS_MST_ACT) != SP_IC_STATUS_MST_ACT){
+			stat = i2c_regs->ic_status;
+			xfer_wait++;
+			if(xfer_wait > (4*I2C_TX_FIFO_DEPTH))
+				break;
+		}
+		stat = i2c_regs->ic_status;
+		if (stat & SP_IC_STATUS_RFNE){
+			i2c_mas_ctlr[i2c_no].buf[i2c_mas_ctlr[i2c_no].DataIndex] = i2c_regs->ic_data_cmd;
+			i2c_mas_ctlr[i2c_no].DataIndex++;
+			//diag_printf("data 0x%x\n", i2c_regs->ic_data_cmd);
+			i2c_mas_ctlr[i2c_no].ReadTxlen--;
+		}
+		stat = i2c_sp_read_clear_intrbits(i2c_no ,i2c_regs);
+		if (stat & SP_IC_INTR_TX_ABRT) {
+			i2c_dw_handle_tx_abort(i2c_no);
+			i2c_mas_ctlr[i2c_no].xfet_action = 0;
+			break;
+		}
+	}
+
+	while(i2c_mas_ctlr[i2c_no].xfet_action)
+	{
+		//diag_printf("RAW_INTR_STAT %x  action : %d \n",stat ,i2c_mas_ctlr[i2c_no].xfet_action);
+		stat = i2c_sp_read_clear_intrbits(i2c_no , i2c_regs);
+		if (stat & SP_IC_INTR_TX_ABRT) {
+			i2c_dw_handle_tx_abort(i2c_no);
+			i2c_mas_ctlr[i2c_no].xfet_action = 0;
+			break;
+		}
+		stat = i2c_regs->ic_status;
+		if (stat & SP_IC_STATUS_TFE)
+			break;
+	}
+
+	xfer_wait = 0;
+	while((i2c_mas_ctlr[i2c_no].ReadTxlen > 0) && (i2c_mas_ctlr[i2c_no].xfet_action == 1))
+	{
+		stat = i2c_sp_read_clear_intrbits(i2c_no , i2c_regs);
+		if (stat & SP_IC_INTR_TX_ABRT) {
+			i2c_dw_handle_tx_abort(i2c_no);
+			i2c_mas_ctlr[i2c_no].xfet_action = 0;
+			break;
+		}
+		stat = i2c_regs->ic_status;
+		if (stat & SP_IC_STATUS_RFNE){
+			i2c_mas_ctlr[i2c_no].buf[i2c_mas_ctlr[i2c_no].DataIndex] = i2c_regs->ic_data_cmd;
+			i2c_mas_ctlr[i2c_no].DataIndex++;
+			//diag_printf("data 0x%x\n", i2c_regs->ic_data_cmd);
+			i2c_mas_ctlr[i2c_no].ReadTxlen--;
+			xfer_wait = 0;
+		} else {
+			if (stat & SP_IC_STATUS_TFE){
+				xfer_wait++;
+				if(xfer_wait > (40*I2C_TX_FIFO_DEPTH))
+				break;
+			}
+		}
+	}
+
+	i2c_regs->ic_intr_mask = 0;
+	temp_reg = i2c_regs->ic_clr_intr;
+	i2c_regs->ic_enable = 0;
+
+}
+
 void sp_i2c_write(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned int len, enum sp_i2c_speed speed)
 {
 
@@ -333,7 +459,7 @@ void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned 
 			i2c_dw_handle_tx_abort(i2c_no);
 			i2c_mas_ctlr[i2c_no].xfet_action = 0;
 			break;
-		}		
+		}
 	}
 
 	while(i2c_mas_ctlr[i2c_no].xfet_action)
@@ -344,10 +470,10 @@ void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned 
 			i2c_dw_handle_tx_abort(i2c_no);
 			i2c_mas_ctlr[i2c_no].xfet_action = 0;
 			break;
-		}		
+		}
 		stat = i2c_regs->ic_status;
 		if (stat & SP_IC_STATUS_TFE)
-			break;	
+			break;
 	}
 
 	xfer_wait = 0;
@@ -374,7 +500,7 @@ void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned 
 			}
 		}
 	}
-	
+
 	i2c_regs->ic_intr_mask = 0;
 	temp_reg = i2c_regs->ic_clr_intr;
 	i2c_regs->ic_enable = 0;
