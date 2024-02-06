@@ -187,7 +187,9 @@ static void init_hw(void)
 	#define STI8070X_I2C_CH   7
 	#define STI8070X_I2C_ADDR 0x60
 
-	//u8 buf[2];
+	u8 id1=0;
+	u8 id2=0;
+	u8 buf[2];
 
 	// I2C7,X1 (GPIO): 86, 87
 	// Set driving strength to 6 (min: 6.8mA, typ: 9.9mA).
@@ -197,6 +199,25 @@ static void init_hw(void)
 	// Initialize I2C7.
 	sp_i2c_en(STI8070X_I2C_CH, I2C_PIN_MODE0);
 	_delay_1ms(1);
+
+	/*
+	 * Read IDs of STI8070X.
+	 * ID1 of STI8070X should be 0x88.
+	 * ID2 of STI8070X should be 0x01.
+	 */
+
+	sp_i2c_restart_one(STI8070X_I2C_CH, STI8070X_I2C_ADDR, 0x03, &id1, 1, SP_I2C_SPEED_STD);
+	prn_string("ID1 of STI8070X = "); prn_byte0(id1); prn_string("\n");
+
+	sp_i2c_restart_one(STI8070X_I2C_CH, STI8070X_I2C_ADDR, 0x04, &id2, 1, SP_I2C_SPEED_STD);
+	prn_string("ID2 of STI8070X = "); prn_byte0(id2); prn_string("\n");
+
+	if (id1 == 0x88 && id2 == 0x01) {
+		buf[0] = 0x00;                  // Set VSEL0 to 0x87.
+		buf[1] = 0x87;
+		sp_i2c_write(STI8070X_I2C_CH, STI8070X_I2C_ADDR, buf, 2, SP_I2C_SPEED_STD);
+		_delay_1ms(1);
+	}
 #endif
 
 	#if (0)
