@@ -636,7 +636,7 @@ static void zmem_check_uboot(void)
 static void cm4_init()
 {
 	/* CM4 init, boot in rootfs by remoteproc */
-	prn_string("M4 init: \n");
+	prn_string("M4 init\n");
 	MOON0_REG_AO->reset[7]    = RF_MASK_V_SET(1 << 15); // reset M4
 	MOON4_REG_AO->sft_cfg[19] = RF_MASK_V_SET(1 << 1);  // enable M4 address (highest 16 bits) remapping
 #if 0 // START M4 in zmem mode for develop
@@ -838,8 +838,9 @@ static void boot_uboot(void)
 		halt();
 	}
 #endif
-	prn_string((const char *)image_get_name(hdr)); prn_string("\n");
-	prn_string("Run uboot@");prn_dword(UBOOT_RUN_ADDR);
+	prn_string("uboot @");prn_dword(UBOOT_RUN_ADDR);
+	prn_string("fip @");prn_dword(FIP_LOAD_ADDR);
+
 	/* boot aarch64 uboot */
 	load_tfa_optee();
 	cm4_init();
