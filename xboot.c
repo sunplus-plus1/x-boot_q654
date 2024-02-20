@@ -818,9 +818,6 @@ static void tzc_test(void)
 /* Assume u-boot has been loaded */
 static void boot_uboot(void)
 {
-	__attribute__((unused)) int is_for_A = 0;
-	const struct image_header *hdr = (struct image_header *)UBOOT_LOAD_ADDR;
-
 #ifdef TZC_TEST
 	tzc_test();
 #endif
