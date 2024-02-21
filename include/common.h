@@ -63,7 +63,8 @@ void boot_reset(void);
 void mon_shell(void);
 void diag_printf(const char *fmt, ...);
 #else
-#define mon_shell      rom_shell
+//#define mon_shell      rom_shell
+#define mon_shell()    while(1)
 #define diag_printf    rom_printf
 #endif
 
