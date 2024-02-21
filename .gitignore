@@ -7,11 +7,6 @@ include/auto_config.h
 bin/
 boot.ld
 boot_c_p.ld
-arch/arm/q645/a64up/a64up
-arch/arm/q645/a64up/a64up.bin
-arch/arm/q645/a64up/a64up.dis
-arch/arm/q645/a64up/a64up.map
-arch/arm/q645/a64up/boot_a64.ld
 arch/arm/sp7350/a64up/a64up
 arch/arm/sp7350/a64up/a64up.bin
 arch/arm/sp7350/a64up/a64up.dis

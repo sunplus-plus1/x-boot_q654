@@ -1,7 +1,7 @@
 #ifndef _BOOTMAIN_INC_
 #define _BOOTMAIN_INC_
 
-/* xboot.img = xboot_hdr + xboot_encrypted(Q645) + sb_info    */
+/* xboot.img = xboot_hdr + xboot_encrypted + sb_info    */
 
 #define XBOOT_HDR_MAGIC   0x54554258      // XBUT (X=58h)
 #define XB_SB_FLAG        (1 << 0)       // secure boot

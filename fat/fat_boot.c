@@ -17,11 +17,7 @@ unsigned int xboot_start_secotr = 0;
 
 static const unsigned char FILENAMES[FAT_FILES][12] =
 {
-#if defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)
-	"ISPBOOOTBIN","U-BOOT  IMG","FIP     IMG"
-#else
-	"ISPBOOOTBIN","U-BOOT  IMG"
-#endif
+	"ISPBOOOTBIN", "U-BOOT  IMG", "FIP     IMG"
 };
 
 static u32 search_fat32_files(fat_info *info, u8 *buffer, u8 type);
@@ -268,7 +264,7 @@ int fat_read_fat_for_training_fw(fat_info *info, u8 *buffer, u32 start_lba)
 	u32 sector;
 	u32 i, j;
 
-#if (defined(PLATFORM_Q645) || defined(PLATFORM_SP7350)) && defined(CONFIG_HAVE_USB_DISK)
+#if defined(PLATFORM_SP7350) && defined(CONFIG_HAVE_USB_DISK)
 	if ((g_bootinfo.gbootRom_boot_mode == USB_ISP) && (g_bootinfo.bootdev_port == USB2_PORT))
 		hal_dcache_invalidate_all();
 #endif
@@ -387,15 +383,11 @@ u32 fat_boot(u32 type, u32 port, fat_info *info, u8 *buffer)
 		}
 #endif
 #ifdef CONFIG_HAVE_USB_DISK
-	#if defined(CONFIG_PLATFORM_Q645) || defined(CONFIG_PLATFORM_SP7350)
 		if (port == USB2_PORT) {
-	#endif
 			dbg_info();
 			info->init_usb = usb2_init;
 			info->read_sector = usb2_readSector;
-	#if defined(CONFIG_PLATFORM_Q645) || defined(CONFIG_PLATFORM_SP7350)
 		}
-	#endif
 #endif
 	} else if (type == SDCARD_ISP) {
 #ifdef CONFIG_HAVE_SDCARD
@@ -719,19 +711,13 @@ static u32 search_fat16_files(fat_info *info, u8 *buffer, u8 type)
 #endif
 
 /*sdcard do isp or boot is decide by ISPBOOOT.BIN size
-  do isp: ISPBOOOT.BIN size > xboot.img size (64k);
-  do boot: ISPBOOOT.BIN size == xboot.img size (64k);
+  do isp: ISPBOOOT.BIN size > xboot.img size (256k);
+  do boot: otherwise;
   for debug Uboot, do not check file
 */
 u8 fat_sdcard_check_boot_mode(fat_info *info)
 {
-
-#if defined (PLATFORM_Q645) || defined(PLATFORM_SP7350)
-	if(info->fileInfo[0].size > 0x40000)
-#else
-	if(info->fileInfo[0].size != 0x10000)
-#endif
-	{
+	if (info->fileInfo[0].size > 0x40000) {
 		dbg_info();
 		return FALSE;
 	}

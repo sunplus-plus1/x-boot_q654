@@ -16,11 +16,7 @@
 #define FAT16_L 		0x31544146
 #define FAT_FDB_SIZE 		32
 #define FAT_DATA_1ST_CLUS_NUM	2
-#if defined(CONFIG_PLATFORM_Q645) || defined(CONFIG_PLATFORM_SP7350)
 #define FAT_FILES 		3
-#else
-#define FAT_FILES 		2
-#endif
 #define FAT32_MAXSECTSIZE 	(16 * 1024)
 #define FAT16_MAXSECTSIZE 	(32 * 1024)
 #define FAT_FILENAMELEN 	11

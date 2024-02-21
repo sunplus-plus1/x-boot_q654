@@ -3,8 +3,8 @@
  * SPDX-License-Identifier:     GPL-2.0+
  */
 
-#ifndef __SP_SPINAND_Q645_H
-#define __SP_SPINAND_Q645_H
+#ifndef __SP_SPINAND_H
+#define __SP_SPINAND_H
 
 /*
  *  spi nand functional related configs
@@ -196,7 +196,7 @@ enum SPINAND_IO_MODE {
 #define DEVICE_FEATURE_ADDR     0xB0
 #define DEVICE_STATUS_ADDR      0xC0
 
-/* Q645 spi nand driver */
+/* SPI-NAND registers */
 struct sp_spinand_regs {
 	unsigned int spi_ctrl;              // 87.0
 	unsigned int spi_timing;            // 87.1
@@ -228,5 +228,5 @@ struct sp_spinand_info {
 	u32 spi_clk_div;
 };
 
-#endif /* __SP_SPINAND_Q645_H */
+#endif /* __SP_SPINAND_H */
 

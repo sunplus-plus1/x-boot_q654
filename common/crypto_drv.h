@@ -14,8 +14,6 @@
  *  platform related
  */
 #define SP_CRYPTO_REG_BASE      (0xf8000000+123*32*4)  //for q654
-//#define SP_CRYPTO_REG_BASE      (0x9c000000+84*32*4)  //for sp7021
-//#define SP_CRYPTO_IRQ           (INTR_INDEX_SEC_INT)
 #define SP_CRYPTO_IRQ           (148)
 
 /*
