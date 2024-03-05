@@ -134,6 +134,10 @@ static void init_hw(void)
 	for (i = 0; i < sizeof(MOON2_REG_AO->clken) / 4; i++)
 		MOON2_REG_AO->clken[i] = RF_MASK_V_SET(0xffff);
 
+	/* disable clocks, enable it in own drivers */
+	MOON2_REG_AO->clken[4] = RF_MASK_V_CLR(1 << 14);	// 4.14 PRNG
+	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(1 << 6);		// 6.6  SEC (crypto engine)
+
 	/* gclken[all] = no */
 	for (i = 0; i < sizeof(MOON2_REG_AO->gclken) / 4; i++)
 		MOON2_REG_AO->gclken[i] = RF_MASK_V_CLR(0xffff);
