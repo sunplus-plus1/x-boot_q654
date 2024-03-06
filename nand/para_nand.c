@@ -144,8 +144,15 @@ UINT32 hw_init_and_setting(void)
 SINT32 PNAND_InitDriver(void)
 {
 	int adjust_cnt = 3;
+	int id = 0x65;/* Refer sp-sp7350.h in kernel */
+	int group = id / 16;
+	int bit = id % 16;
+	int mask = 1 << bit;
 
 	dbg_info();
+
+	/* Enable the clken */
+	MOON2_REG_AO->clken[group] = RF_MASK_V_SET(mask);
 
 	//xt: NAND CTRL soft reset, 0 is channel 0
 	Soft_reset(0);//xt: need?
