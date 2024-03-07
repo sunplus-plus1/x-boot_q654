@@ -1212,6 +1212,7 @@ static void usb_isp(void)
 static void sdcard_isp(void)
 {
 	prn_string("\n{{sdcard}}\n");
+	MOON2_REG_AO->clken[0] = RF_MASK_V((1 << 14), (1 << 14)); 
 	do_fat_boot(SDCARD_ISP, 1);
 }
 #endif

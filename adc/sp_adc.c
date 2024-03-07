@@ -22,6 +22,7 @@ void sp_adc_read(unsigned int adc_chan, unsigned int *adc_buf)
 	u32 stat;
 	volatile struct dw_adc_regs *adc_regs = ADC_REG_AO;
 
+	MOON2_REG_AO->clken[8] = RF_MASK_V((1 << 5), (1 << 5)); 
 	temp_reg = adc_regs->adc_cfg0b;
 	temp_reg |= SP_ADC_EN;
 	adc_regs->adc_cfg0b = temp_reg;		// adc enable
