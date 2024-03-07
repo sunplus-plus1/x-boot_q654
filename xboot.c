@@ -1212,7 +1212,7 @@ static void usb_isp(void)
 static void sdcard_isp(void)
 {
 	prn_string("\n{{sdcard}}\n");
-	MOON2_REG_AO->clken[0] = RF_MASK_V((1 << 14), (1 << 14)); 
+	MOON2_REG_AO->clken[0] = RF_MASK_V((1 << 14), (1 << 14));
 	do_fat_boot(SDCARD_ISP, 1);
 }
 #endif
@@ -1364,6 +1364,7 @@ static void emmc_boot(void)
 	int i;
 
 	prn_string("\n{{emmc_boot}}\n");
+	MOON2_REG_AO->clken[0] = RF_MASK_V((1 << 13), (1 << 13));
 	SetBootDev(DEVICE_EMMC, 1, 0);
 
 #ifdef CLKGEN_EMMC_400M
