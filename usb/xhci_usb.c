@@ -21,6 +21,62 @@ extern void boot_reset(void);
 
 void uphy_init(void)
 {
+#ifndef CONFIG_BOOT_ON_ZEBU
+	volatile struct uphy_u3_regs *dwc3phy_reg;
+	u32 result, i = 0;
+#endif
+
+	prn_string("\n");
+	//GPIO settings for type C
+	//HAL_GPIO_F_SET(98, 1);
+	//HAL_GPIO_M_SET(98, 1);
+
+	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 14); // U3PHY0_CLKEN=1
+	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 13); // USB30C0_CLKEN=1
+
+	MOON0_REG_AO->reset[5] = RF_MASK_V_SET(1 << 14); // U3PHY0_RESET=1
+	MOON0_REG_AO->reset[5] = RF_MASK_V_SET(1 << 13); // USB30C0_RESET=1
+	_delay_1ms(1);
+	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 14); // U3PHY0_RESET=0
+	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 13); // USB30C0_RESET=0
+
+#ifndef CONFIG_BOOT_ON_ZEBU
+	dwc3phy_reg = (volatile struct uphy_u3_regs *) UPHY0_U3_REG;
+	dwc3phy_reg->cfg[1] |= 0x03;
+	for (;;) {
+		result = dwc3phy_reg->cfg[2] & 0x3;
+		if (result == 0x01)
+			break;
+
+		if (i++ > 10) {
+			prn_string("PHY0_TIMEOUT_ERR0\n");
+			i = 0;
+			break;
+		}
+		_delay_1ms(1);
+	}
+
+	dwc3phy_reg->cfg[2] |= 0x01;
+	//type C orientation settings
+	//if (HAL_GPIO_I_GET(98))
+	//	dwc3phy_reg->cfg[5] = (dwc3phy_reg->cfg[5] & 0xFFE0) | 0x15;
+	//else
+	//	dwc3phy_reg->cfg[5] = (dwc3phy_reg->cfg[5] & 0xFFE0) | 0x11;
+	dwc3phy_reg->cfg[5] = 0x11;
+	i = 0;
+	for (;;) {
+		result = dwc3phy_reg->cfg[2] & 0x3;
+		if (result == 0x01)
+			break;
+
+		if (i++ > 10) {
+			prn_string("PHY0_TIMEOUT_ERR1\n");
+			i = 0;
+			break;
+		}
+		_delay_1ms(1);
+	}
+#endif
 }
 
 void usb_power_init(void)
@@ -30,10 +86,6 @@ void usb_power_init(void)
 	//    Device: disable
 #if defined(PLATFORM_SP7350)
 	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 13); // USB30C0_CLKEN=1
-	// Reset USB30C0
-	MOON0_REG_AO->reset[5] = RF_MASK_V_SET(1 << 13); // USB30C0_RESET=1
-	_delay_1ms(1);
-	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 13); // USB30C0_RESET=0
 #endif
 }
 
@@ -2395,6 +2447,8 @@ int usb_init(int port, int next_port_in_hub)
 /* usb-uclass.c/usb_init.c -> xhci-spdwc3.c/xhci_dwc3_probe*/
 // xhci register base
 #if defined(PLATFORM_SP7350)
+		usb_power_init();
+		uphy_init();
 		g_io_buf.usb.xhci.hccr = (struct xhci_hccr *) XHCI0_REG;
 #endif
 		g_io_buf.usb.xhci.hcor = (struct xhci_hcor *)((char *)g_io_buf.usb.xhci.hccr +
