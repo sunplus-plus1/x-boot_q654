@@ -433,6 +433,14 @@ static int run_draminit(void)
 		return -1;
 	}
 
+#ifdef CONFIG_CPIO_MASTER_MODE
+	cpio_master();	// Set CPIO to master mode.
+#endif
+#ifdef CONFIG_CPIO_SLAVE_MODE
+	cpio_slave();	// Set CPIO to slave mode.
+	while (1);	// Stop after CPIO completes initialization.
+#endif
+
 #ifdef CONFIG_AP6256_WL_REG_ON_GPIO56
 	GPIO_MASTER_REG->gpio_master[56 / 16] = 0x10001 << (56 % 16);
 	GPIO_OUT_REG->gpio_out[56 / 16] = 0x10000 << (56 % 16);
@@ -2107,12 +2115,6 @@ void xboot_main(void)
 	check_ldo();
 #endif
 
-#if 0 // Enable CPIO master mode.
-	cpio_master();
-#endif
-#if 0 // Enable CPIO slave mode.
-	cpio_slave();
-#endif
 #ifdef CPIO_TEST
 	cpio_test();
 #endif

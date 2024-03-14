@@ -6,6 +6,7 @@ choice
 	config ARCH_RISCV
 		bool "RISCV architecture"
 endchoice
+
 choice
 	prompt "Platform"
 	default PLATFORM_SP7350
@@ -14,74 +15,74 @@ choice
 endchoice
 
 choice
-prompt "DDR SDRAM type"
-default LPDDR4
-depends on PLATFORM_SP7350
-config  LPDDR4
-	bool "LPDDR4"
-config DDR4
-	bool "DDR4"
-config LPDDR3
-	bool "LPDDR3"
-config DDR3
-	bool "DDR3"
+	prompt "DDR SDRAM type"
+	default LPDDR4
+	depends on PLATFORM_SP7350
+	config  LPDDR4
+		bool "LPDDR4"
+	config DDR4
+		bool "DDR4"
+	config LPDDR3
+		bool "LPDDR3"
+	config DDR3
+		bool "DDR3"
 endchoice
 
 choice
-prompt "LPDDR4 SDRAM part number"
-depends on PLATFORM_SP7350 && LPDDR4
-config  NT6AN1024F32AV
-	bool "Nayna NT6AN1024F32AV"
-	help
-	  Nanya NT6AN1024F32AV, 1Gbx32, 2 rank
-config MT53D1024M32D4
-	bool "Micron MT53D1024M32D4 D9WHT"
-	help
-	  Micron MT53D1024M32D4, 1Gbx32, 2 rank, FBGA code = D9WHT
-config MT53E1G32D2_A
-	bool "Micron MT53E1G32D2_A D9ZQX"
-	help
-	  Micron MT53E1G32D2_A, 1Gbx32, 1 rank, FBGA code = D9ZQX
-config MT53E1G32D2_B
-	bool "Micron MT53E1G32D2_B D8CJG"
-	help
-	  Micron MT53E1G32D2_B, 1Gbx32, 2 rank, FBGA code = D8CJG
-config MT53E2G32D4_C
-	bool "Micron MT53E2G32D4_C D8CJN"
-	help
-	  Micron MT53E2G32D4_C, 1Gbx32, 2 rank, FBGA code = D8CJN
-	  MT53E2G32D4_C
+	prompt "LPDDR4 SDRAM part number"
+	depends on PLATFORM_SP7350 && LPDDR4
+	config  NT6AN1024F32AV
+		bool "Nayna NT6AN1024F32AV"
+		help
+		  Nanya NT6AN1024F32AV, 1Gbx32, 2 rank
+	config MT53D1024M32D4
+		bool "Micron MT53D1024M32D4 D9WHT"
+		help
+		  Micron MT53D1024M32D4, 1Gbx32, 2 rank, FBGA code = D9WHT
+	config MT53E1G32D2_A
+		bool "Micron MT53E1G32D2_A D9ZQX"
+		help
+		  Micron MT53E1G32D2_A, 1Gbx32, 1 rank, FBGA code = D9ZQX
+	config MT53E1G32D2_B
+		bool "Micron MT53E1G32D2_B D8CJG"
+		help
+		  Micron MT53E1G32D2_B, 1Gbx32, 2 rank, FBGA code = D8CJG
+	config MT53E2G32D4_C
+		bool "Micron MT53E2G32D4_C D8CJN"
+		help
+		  Micron MT53E2G32D4_C, 1Gbx32, 2 rank, FBGA code = D8CJN
+		  MT53E2G32D4_C
 endchoice
 
 choice
-prompt "DDR4 SDRAM part number"
-depends on PLATFORM_SP7350 && DDR4
-config MT40A512M16TB
-	bool "Micron MT40A512M16TB D8BPK"
-	help
-	  Micron MT40A512M16TB, 512Mx16, 1 rank, FBGA code = D8BPK
-config K4AAG165WA
-	bool "Samsung K4AAG165WA"
-	help
-	  SAMSUNG K4AAG165WA, 1Gx16, 1 rank
+	prompt "DDR4 SDRAM part number"
+	depends on PLATFORM_SP7350 && DDR4
+	config MT40A512M16TB
+		bool "Micron MT40A512M16TB D8BPK"
+		help
+		  Micron MT40A512M16TB, 512Mx16, 1 rank, FBGA code = D8BPK
+	config K4AAG165WA
+		bool "Samsung K4AAG165WA"
+		help
+		  SAMSUNG K4AAG165WA, 1Gx16, 1 rank
 endchoice
 
 choice
-prompt "LPDDR3 SDRAM part number"
-depends on PLATFORM_SP7350 && LPDDR3
+	prompt "LPDDR3 SDRAM part number"
+	depends on PLATFORM_SP7350 && LPDDR3
 endchoice
 
 choice
-prompt "DDR3 SDRAM part number"
-depends on PLATFORM_SP7350 && DDR3
-config MT41K512M16VRP
-	bool "Micron MT41K512M16VRP D9ZWN"
-	help
-	  Micron MT41K512M16VRP, 512Mx16, 1 rank, FBGA code = D9ZWN
-config K4B8G1646D
-	bool "Samsung K4B8G1646D"
-	help
-	  SAMSUNG K4B8G1646D, 512Mx16, 2 rank
+	prompt "DDR3 SDRAM part number"
+	depends on PLATFORM_SP7350 && DDR3
+	config MT41K512M16VRP
+		bool "Micron MT41K512M16VRP D9ZWN"
+		help
+		  Micron MT41K512M16VRP, 512Mx16, 1 rank, FBGA code = D9ZWN
+	config K4B8G1646D
+		bool "Samsung K4B8G1646D"
+		help
+		  SAMSUNG K4B8G1646D, 512Mx16, 2 rank
 endchoice
 
 config PLATFORM_IC_REV
@@ -268,3 +269,20 @@ config AP6256_WL_REG_ON_GPIO56
 	help
 	  Say "y" if you want to control WL_REG_ON signal using
 	  GPIO56.
+choice
+	prompt "CPIO Mode"
+	default CPIO_OFF_MODE
+	depends on PLATFORM_SP7350
+	config  CPIO_OFF_MODE
+		bool "Off"
+		help
+		  Turn off CPIO interface.
+	config  CPIO_MASTER_MODE
+		bool "Master"
+		help
+		  Select CPIO interface to work at Master mode.
+	config CPIO_SLAVE_MODE
+		bool "Slave"
+		help
+		  Select CPIO interface to work at Slave mode.
+endchoice

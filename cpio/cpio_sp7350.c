@@ -1,6 +1,7 @@
 #include <types.h>
 #include <common.h>
 #include <regmap.h>
+#include "hal_gpio.h"
 #include "cpio.h"
 
 //#define CPIO_ANA_DBG
@@ -1259,6 +1260,7 @@ void cpio_slave(void)
 	unsigned int data_tmp;
 
 	prn_string("\n\n---- CPIO-R slave mode Begin ----\n\n");
+	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
 
 	data_tmp = MOON0_REG_AO->reset[1];
@@ -1266,6 +1268,14 @@ void cpio_slave(void)
 		prn_string("CPIO system reset not released, releasing!!\n");
 		MOON0_REG_AO->reset[1] = (0x2<<16);	// CPIOR_RESET = 0
 		STC_delay_us (100);
+	}
+
+	HAL_GPIO_GPO(96, 0);
+	HAL_GPIO_GPI(94);
+	HAL_GPIO_GPO(96, 1);
+	while (1) {
+		if (HAL_GPIO_I_GET(94))
+			break;
 	}
 
 	// Change SN
@@ -1405,8 +1415,6 @@ void cpio_slave(void)
 	prn_string("PHY Mode: "); prn_dword(cpior_reg->PHY_CTRL);
 	prn_string("Timer start: "); prn_dword(dly_cnt0);
 	prn_string("Timer End: "); prn_dword(dly_cnt1);
-
-	//while (1);
 }
 
 void cpio_master(void)
@@ -1415,6 +1423,7 @@ void cpio_master(void)
 	unsigned int data_tmp;
 
 	prn_string("\n\n---- CPIO-R master mode Begin ----\n\n");
+	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
 
 	data_tmp = MOON0_REG_AO->reset[1];
@@ -1423,6 +1432,14 @@ void cpio_master(void)
 		MOON0_REG_AO->reset[1] = (0x2<<16);	// CPIOR_RESET = 0
 		STC_delay_us (100);
 	}
+
+	HAL_GPIO_GPO(74, 0);
+	HAL_GPIO_GPI(72);
+	while (1) {
+		if (HAL_GPIO_I_GET(72))
+			break;
+	}
+	HAL_GPIO_GPO(74, 1);
 
 	// Change SN
 	cpior_reg->IO_SNL = 0x0000A5AA;
@@ -1554,6 +1571,4 @@ void cpio_master(void)
 	prn_string("PHY Mode: "); prn_dword(cpior_reg->PHY_CTRL);
 	prn_string("Timer start: "); prn_dword(dly_cnt0);
 	prn_string("Timer End: "); prn_dword(dly_cnt1);
-
-	//while (1);
 }
