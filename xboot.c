@@ -1869,6 +1869,9 @@ static void spi_nand_boot(int pin_x)
 	prn_string("\n{{spi_nand_boot}}\n");
 	prn_decimal_ln(pin_x);
 
+	/* Enable SPIND_CLK and BCH_CLK clocks */
+	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(0x3<<2);
+
 	SetBootDev(DEVICE_SPI_NAND, pin_x, 0);
 	ret = InitDevice(SPINAND_BOOT);
 	if (ret == ROM_SUCCESS) {
