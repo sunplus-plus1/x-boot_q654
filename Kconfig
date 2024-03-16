@@ -264,6 +264,20 @@ config REGULATOR_STI8070X
 	help
 	  This adds support for voltage regulator STI8070x series.
 
+choice
+	prompt "Ethernet PHY Mode"
+	default PHY_RGMII_MODE
+	depends on PLATFORM_SP7350
+	config  PHY_RGMII_MODE
+		bool "RGMII"
+		help
+		  Select RGMII interface for PHY.
+	config PHY_RMII_MODE
+		bool "RMII"
+		help
+		  Select RMII interface for PHY.
+endchoice
+
 config AP6256_WL_REG_ON_GPIO56
 	bool "Enable AP6256 WL_REG_ON control using GPIO56"
 	help
