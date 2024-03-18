@@ -305,14 +305,15 @@ static void init_hw(void)
 #endif
 
 	// Turn off power of NPU (NPU_PWR_EN, GPIO65).
-	HAL_GPIO_GPO(65,0);
+	HAL_GPIO_GPO(65, 0);
 	PMC_REGS->pmc_iso_pwd = 0xFFAA5500;
 	PMC_REGS->pmc_iso_en |= 0x10;
+
 	// Turn on power of Video codec (VV_PWR_EN, GPIO66).
-	HAL_GPIO_GPO(66,1);
+	HAL_GPIO_GPO(66, 1);
 
 	// Turn on power of Main (MAIN_PWR_EN, GPIO67).
-	HAL_GPIO_GPO(67,1);
+	HAL_GPIO_GPO(67, 1);
 
 #ifdef PLLD_800MHz
 	prn_string("PLLD: 800MHz, DATARATE:3200\n");
@@ -434,12 +435,10 @@ static int run_draminit(void)
 #endif
 
 #ifdef CONFIG_AP6256_WL_REG_ON_GPIO56
-	GPIO_MASTER_REG->gpio_master[56 / 16] = 0x10001 << (56 % 16);
-	GPIO_OUT_REG->gpio_out[56 / 16] = 0x10000 << (56 % 16);
-	GPIO_OE_REG->gpio_oe[56 / 16] = 0x10001 << (56 % 16);
-	PAD_CTL_REG->gpio_first[56 / 32] |=  1 << (56 % 32);
+	HAL_GPIO_GPO(56, 0);
 	prn_string("Set WL_REG_ON (GPIO56) to HI.\n");
 	GPIO_OUT_REG->gpio_out[56 / 16] = 0x10001 << (56 % 16);
+	HAL_GPIO_O_SET(56, 1);
 #endif
 
 	return 0;
