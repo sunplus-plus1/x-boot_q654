@@ -901,4 +901,40 @@ struct rgst_cpio {
 };
 #define cpior_reg ((volatile struct rgst_cpio *)0xf8106000)
 
+struct pmc_regs_ao {
+        unsigned int pmc_ctrl;
+        unsigned int pmc_timer;
+        unsigned int pmc_timer2;
+        unsigned int pmc_maindomain_pwd_h;
+        unsigned int pmc_maindomain_pwd_l;
+        unsigned int pmc_xtal32k_pwd_h;
+        unsigned int pmc_xtal32k_pwd_l;
+        unsigned int pmc_xtal27m_pwd_h;
+        unsigned int pmc_xtal27m_pwd_l;
+        unsigned int pmc_wakeup_latch;
+        unsigned int pmc_ivmx_reg;
+        unsigned int pmc_reserve11;
+        unsigned int pmc_reserve12;
+        unsigned int pmc_reserve13;
+        unsigned int pmc_reserve14;
+        unsigned int pmc_main_pwr_ctrl;
+        unsigned int pmc_corepsw_pwd ;
+        unsigned int pmc_corepsw_en;
+        unsigned int pmc_coremem_sdpwd;
+        unsigned int pmc_coremem_sden;
+        unsigned int pmc_lvs_pwd;
+        unsigned int pmc_lvs_disable;
+        unsigned int pmc_iso_pwd;
+        unsigned int pmc_iso_en;
+        unsigned int pmc_reserve24;
+        unsigned int pmc_reserve25;
+        unsigned int pmc_reserve26;
+        unsigned int pmc_reset_vector;
+        unsigned int pmc_ca55_reset_state;
+        unsigned int pmc_pctl_reg;
+        unsigned int pmc_pctl_int_clr;
+        unsigned int pmc_reserve31;
+};
+#define PMC_REGS ((volatile struct pmc_regs_ao *) RF_GRP_AO(36, 0))
+
 #endif /* __INC_REGMAP_SP7350_H */

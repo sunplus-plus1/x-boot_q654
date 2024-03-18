@@ -305,22 +305,14 @@ static void init_hw(void)
 #endif
 
 	// Turn off power of NPU (NPU_PWR_EN, GPIO65).
-	GPIO_MASTER_REG->gpio_master[65 / 16] = 0x10001 << (65 % 16);
-	GPIO_OUT_REG->gpio_out[65 / 16]       = 0x10000 << (65 % 16);
-	GPIO_OE_REG->gpio_oe[65 / 16]         = 0x10001 << (65 % 16);
-	PAD_CTL_REG->gpio_first[65 / 32]     |=       1 << (65 % 32);
-
+	HAL_GPIO_GPO(65,0);
+	PMC_REGS->pmc_iso_pwd = 0xFFAA5500;
+	PMC_REGS->pmc_iso_en |= 0x10;
 	// Turn on power of Video codec (VV_PWR_EN, GPIO66).
-	GPIO_MASTER_REG->gpio_master[66 / 16] = 0x10001 << (66 % 16);
-	GPIO_OUT_REG->gpio_out[66 / 16]       = 0x10001 << (66 % 16);
-	GPIO_OE_REG->gpio_oe[66 / 16]         = 0x10001 << (66 % 16);
-	PAD_CTL_REG->gpio_first[66 / 32]     |=       1 << (66 % 32);
+	HAL_GPIO_GPO(66,1);
 
 	// Turn on power of Main (MAIN_PWR_EN, GPIO67).
-	GPIO_MASTER_REG->gpio_master[67 / 16] = 0x10001 << (67 % 16);
-	GPIO_OUT_REG->gpio_out[67 / 16]       = 0x10001 << (67 % 16);
-	GPIO_OE_REG->gpio_oe[67 / 16]         = 0x10001 << (67 % 16);
-	PAD_CTL_REG->gpio_first[67 / 32]     |=       1 << (67 % 32);
+	HAL_GPIO_GPO(67,1);
 
 #ifdef PLLD_800MHz
 	prn_string("PLLD: 800MHz, DATARATE:3200\n");
