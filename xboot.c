@@ -2027,11 +2027,6 @@ static void boot_flow(void)
 static void init_uart(void)
 {
 #ifndef CONFIG_DEBUG_WITH_2ND_UART
-	/* uart6 pinmux : UA6_TX, UA6_RX  used for CM4 debug message  */
-	MOON1_REG_AO->sft_cfg[3] = RF_MASK_V((3 << 0), (1 << 0)); // UA6_SEL=1
-	MOON0_REG_AO->reset[7] = RF_MASK_V_CLR(1 << 12);          // UA6_RESET=0
-	UART6_REG->div_l = UART_BAUD_DIV_L(BAUDRATE, UART_SRC_CLK);
-	UART6_REG->div_h = UART_BAUD_DIV_H(BAUDRATE, UART_SRC_CLK);
 #if 0	// Enable UADBG for Linux ttyS5
 	MOON1_REG_AO->sft_cfg[2] = RF_MASK_V_SET(1 << 14); /* UADBG_SEL=1 */
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 10);   // UADBG_RESET=0
