@@ -337,6 +337,7 @@ int sp7350_image_verify_decrypt(const struct image_header  *hdr)
 	prn_string(" ("); prn_decimal(data_size);
 	prn_string(") verify signature ... ");
 
+	MOON2_REG_AO->clken[6] = RF_MASK_V_SET(1 << 6); // SEC_CLKEN -> 1
 	t0 = get_timer(0);
 
 	/* initial buffers */
@@ -375,6 +376,7 @@ int sp7350_image_verify_decrypt(const struct image_header  *hdr)
 #endif
 
 	t1 = get_timer(t0);
+	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(1 << 6); // SEC_CLKEN -> 0
 
 	//prn_dump("decrypted hash", dst, HASH_SZ);
 	//prn_dump("hash", src, HASH_SZ);
