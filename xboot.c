@@ -130,13 +130,23 @@ static void init_hw(void)
 	// Set SPI-NOR to non-secure mode (secure_enable=0).
 	*(volatile u32 *)(0xf8000b18) = *(volatile u32 *)(0xf8000b18) & 0xfffeffff;
 
+#if 0 // Enable all clocks
 	/* clken[all]  = enable */
 	for (i = 0; i < sizeof(MOON2_REG_AO->clken) / 4; i++)
 		MOON2_REG_AO->clken[i] = RF_MASK_V_SET(0xffff);
-
-	/* disable clocks, enable it in own drivers */
-	MOON2_REG_AO->clken[4] = RF_MASK_V_CLR(1 << 14);	// 4.14 PRNG
-	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(1 << 6);		// 6.6  SEC (crypto engine)
+#else
+	MOON2_REG_AO->clken[0] = RF_MASK_V_CLR(0xe080);		// Stop CARD2/2/0, GMAC
+	MOON2_REG_AO->clken[1] = RF_MASK_V_CLR(0xffc2);		// Stop DM2/1/0, VCL5/4/3/2/1/0, VCL, CPIOR
+	MOON2_REG_AO->clken[2] = RF_MASK_V_CLR(0xffff);		// Stop Display
+	MOON2_REG_AO->clken[3] = RF_MASK_V_CLR(0xffff);		// Stop VIN, MIPIRX
+	MOON2_REG_AO->clken[4] = RF_MASK_V_CLR(0xdfff);		// Stop Semaphore, PRNG, VIN
+	MOON2_REG_AO->clken[5] = RF_MASK_V_CLR(0xf380);		// Stop USB3, USB2, UA3/2/1
+	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(0x4070);		// Stop NPU, Crypto, PNAND, AXI-DMA
+	MOON2_REG_AO->clken[7] = RF_MASK_V_CLR(0x3010);		// Stop UA7/6, Audio
+	MOON2_REG_AO->clken[8] = RF_MASK_V_CLR(0xfe70);		// Stop I2C6/5/4/3/2/1/0, PWM, ADC, AHB-DMA
+	MOON2_REG_AO->clken[9] = RF_MASK_V_CLR(0x01ff);		// Stop SPI5/4/3/2/1/0, I2C9/8/7
+	MOON3_REG_AO->plla_cfg[1] = RF_MASK_V_CLR(0x4);		// Power down PLLA
+#endif
 
 	/* gclken[all] = no */
 	for (i = 0; i < sizeof(MOON2_REG_AO->gclken) / 4; i++)
@@ -286,7 +296,9 @@ static void init_hw(void)
 		 * internal clock of MIPI-CSI RX2 port releases the reset of MIPI-CSI RX3
 		 * port.
 		 */
+		MOON2_REG_AO->clken[3] = RF_MASK_V_SET(0x4);
 		*(volatile u32 *)0xf800539c = 0x00020003;		// BIST_INCLK_EN(G167.7[17])
+		MOON2_REG_AO->clken[3] = RF_MASK_V_CLR(0x4);
 	}
 #endif
 
