@@ -141,7 +141,7 @@ static void init_hw(void)
 	MOON2_REG_AO->clken[3] = RF_MASK_V_CLR(0xffff);		// Stop VIN, MIPIRX
 	MOON2_REG_AO->clken[4] = RF_MASK_V_CLR(0xdfff);		// Stop Semaphore, PRNG, VIN
 	MOON2_REG_AO->clken[5] = RF_MASK_V_CLR(0xf380);		// Stop USB3, USB2, UA3/2/1
-	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(0x4070);		// Stop NPU, Crypto, PNAND, AXI-DMA
+	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(0x4077);		// Stop NPU, Crypto, PNAND, AXI-DMA, Video codec
 	MOON2_REG_AO->clken[7] = RF_MASK_V_CLR(0x3010);		// Stop UA7/6, Audio
 	MOON2_REG_AO->clken[8] = RF_MASK_V_CLR(0xfe70);		// Stop I2C6/5/4/3/2/1/0, PWM, ADC, AHB-DMA
 	MOON2_REG_AO->clken[9] = RF_MASK_V_CLR(0x01ff);		// Stop SPI5/4/3/2/1/0, I2C9/8/7
