@@ -50,8 +50,16 @@ choice
 	config MT53E2G32D4_C
 		bool "Micron MT53E2G32D4_C D8CJN"
 		help
-		  Micron MT53E2G32D4_C, 1Gbx32, 2 rank, FBGA code = D8CJN
+		  Micron MT53E2G32D4_C, 2Gbx32, 2 rank, FBGA code = D8CJN
 		  MT53E2G32D4_C
+	config RS1G32LO4D2BDS
+		bool "Rayson RS1G32LO4D2DBS"
+		help
+		  Rayson RS1G32LO4D2DBS, 1Gbx32, 2 rank
+	config HG4XD04G
+		bool "Hosinglobal HG4XD04G"
+		help
+		  Hosinglobal HG4XD04G, 1Gbx32, 2 rank
 endchoice
 
 choice
