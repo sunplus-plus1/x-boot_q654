@@ -695,8 +695,6 @@ static int load_tfa_optee(void)
 	return 0;
 }
 
-//TODO: Tune SOC security
-// RD mnatis: http://psweb.sunplus.com/mantis_PD2/view.php?id=9092
 static void set_module_nonsecure(void)
 {
 	int i;
