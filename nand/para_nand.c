@@ -125,7 +125,7 @@ UINT32 hw_init_and_setting(void)
 		return ROM_FAIL;
 	}
 
-	/* Q654 NAND controller only use one 1 channel and 1 chip enable */
+	/* NAND controller only use one 1 channel and 1 chip enable */
 	para_nand_chip_num(each_channel_have_1CE);
 
 	Memory_attribute_setting(&g_bootinfo.flash_readable_info);

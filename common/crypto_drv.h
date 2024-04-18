@@ -13,7 +13,7 @@
 /*
  *  platform related
  */
-#define SP_CRYPTO_REG_BASE      (0xf8000000+123*32*4)  //for q654
+#define SP_CRYPTO_REG_BASE      (0xf8000000+123*32*4)
 #define SP_CRYPTO_IRQ           (148)
 
 /*
