@@ -247,6 +247,7 @@ void sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *d
 		}
 	}
 
+	xfer_wait = 0;
 	while(i2c_mas_ctlr[i2c_no].xfet_action)
 	{
 		//diag_printf("RAW_INTR_STAT %x  action : %d \n",stat ,i2c_mas_ctlr[i2c_no].xfet_action);
@@ -256,6 +257,16 @@ void sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *d
 			i2c_mas_ctlr[i2c_no].xfet_action = 0;
 			break;
 		}
+
+		if(xfer_wait < (4*I2C_TX_FIFO_DEPTH)) {
+			xfer_wait++;
+			delay_1ms(1);
+		} else {
+			prn_string("i2c restart read time-out \n");
+			i2c_mas_ctlr[i2c_no].xfet_action = 0;
+			break;
+		}
+
 		stat = i2c_regs->ic_status;
 		if (stat & SP_IC_STATUS_TFE)
 			break;
@@ -363,6 +374,7 @@ void sp_i2c_write(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned
 		}
 	}
 
+	xfer_wait = 0;
 	while(i2c_mas_ctlr[i2c_no].xfet_action)
 	{
 		stat = i2c_regs->ic_status;
@@ -373,6 +385,15 @@ void sp_i2c_write(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned
 		stat = i2c_sp_read_clear_intrbits(i2c_no , i2c_regs);
 		if (stat & SP_IC_INTR_TX_ABRT) {
 			i2c_dw_handle_tx_abort(i2c_no);
+			i2c_mas_ctlr[i2c_no].xfet_action = 0;
+			break;
+		}
+
+		if(xfer_wait < (4*I2C_TX_FIFO_DEPTH)) {
+			xfer_wait++;
+			delay_1ms(1);
+		} else {
+			prn_string("i2c write time-out \n");
 			i2c_mas_ctlr[i2c_no].xfet_action = 0;
 			break;
 		}
@@ -462,6 +483,7 @@ void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned 
 		}
 	}
 
+	xfer_wait = 0;
 	while(i2c_mas_ctlr[i2c_no].xfet_action)
 	{
 		//diag_printf("RAW_INTR_STAT %x  action : %d \n",stat ,i2c_mas_ctlr[i2c_no].xfet_action);
@@ -471,6 +493,16 @@ void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned 
 			i2c_mas_ctlr[i2c_no].xfet_action = 0;
 			break;
 		}
+
+		if(xfer_wait < (4*I2C_TX_FIFO_DEPTH)) {
+			xfer_wait++;
+			delay_1ms(1);
+		} else {
+			prn_string("i2c read time-out \n");
+			i2c_mas_ctlr[i2c_no].xfet_action = 0;
+			break;
+		}
+
 		stat = i2c_regs->ic_status;
 		if (stat & SP_IC_STATUS_TFE)
 			break;
