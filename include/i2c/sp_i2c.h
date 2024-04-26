@@ -4,6 +4,8 @@
 #include <config.h>
 #include <regmap.h>
 #include <types.h>
+#include <hal_gpio.h>
+
 
 /****************************************
 * I2C Master
@@ -22,6 +24,11 @@ enum sp_i2c_speed {
 enum sp_i2c_pin_mode {
 	I2C_PIN_MODE0 = 0,
 	I2C_PIN_MODE1 = 1,
+};
+
+enum sp_i2c_tx_check {
+	I2C_TX_OK = 0,
+	I2C_TX_ERR = 1,
 };
 
 #define I2C_TX_FIFO_DEPTH	8
@@ -110,8 +117,8 @@ struct i2c_master_ctlr {
 struct i2c_master_ctlr i2c_mas_ctlr[I2C_NO];
 
 void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode);
-void sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *data_buf ,unsigned int len,enum sp_i2c_speed speed);
-void sp_i2c_write(unsigned int i2c_no, u8  slave_addr, u8  *data_buf, unsigned int len, enum sp_i2c_speed speed);
-void sp_i2c_read(unsigned int i2c_no, u8  slave_addr, u8  *data_buf, unsigned int len, enum sp_i2c_speed speed);
+int sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *data_buf ,unsigned int len,enum sp_i2c_speed speed);
+int sp_i2c_write(unsigned int i2c_no, u8  slave_addr, u8  *data_buf, unsigned int len, enum sp_i2c_speed speed);
+int sp_i2c_read(unsigned int i2c_no, u8  slave_addr, u8  *data_buf, unsigned int len, enum sp_i2c_speed speed);
 
 #endif

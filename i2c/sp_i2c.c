@@ -71,6 +71,131 @@ void i2c_dw_handle_tx_abort(unsigned int i2c_no)
 
 }
 
+int get_sp_i2c_scl_pin(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
+{
+	int pin = 0;
+	switch (i2c_no) {
+		case 0:
+			if (mode == I2C_PIN_MODE0)
+				pin = 68;
+			else
+				pin = 54;
+		break;
+		case 1:
+			pin = 70;
+		break;
+		case 2:
+			if (mode == I2C_PIN_MODE0)
+				pin = 76;
+			else
+				pin = 56;
+		break;
+		case 3:
+			pin = 88;
+		break;
+		case 4:
+			pin = 90;
+		break;
+		case 5:
+			pin = 92;
+		break;
+		case 6:
+			if (mode == I2C_PIN_MODE0)
+				pin = 84;
+			else
+				pin = 1;
+		break;
+		case 7:
+			if (mode == I2C_PIN_MODE0)
+				pin = 86;
+			else
+				pin = 3;
+		break;
+		case 8:
+			if (mode == I2C_PIN_MODE0)
+				pin = 95;
+			else
+				pin = 9;
+		break;
+		case 9:
+			if (mode == I2C_PIN_MODE0)
+				pin = 97;
+			else
+				pin = 11;
+		break;
+
+	}
+	return pin;
+}
+
+int get_sp_i2c_sda_pin(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
+{
+	int pin = 0;
+	switch (i2c_no) {
+		case 0:
+			if (mode == I2C_PIN_MODE0)
+				pin = 69;
+			else
+				pin = 55;
+		break;
+		case 1:
+			pin = 71;
+		break;
+		case 2:
+			if (mode == I2C_PIN_MODE0)
+				pin = 77;
+			else
+				pin = 57;
+		break;
+		case 3:
+			pin = 89;
+		break;
+		case 4:
+			pin = 91;
+		break;
+		case 5:
+			pin = 93;
+		break;
+		case 6:
+			if (mode == I2C_PIN_MODE0)
+				pin = 85;
+			else
+				pin = 2;
+		break;
+		case 7:
+			if (mode == I2C_PIN_MODE0)
+				pin = 87;
+			else
+				pin = 4;
+		break;
+		case 8:
+			if (mode == I2C_PIN_MODE0)
+				pin = 96;
+			else
+				pin = 10;
+		break;
+		case 9:
+			if (mode == I2C_PIN_MODE0)
+				pin = 98;
+			else
+				pin = 12;
+		break;
+
+	}
+	return pin;
+}
+
+int sp_i2c_sda_pin_rst(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
+{
+	int pin = get_sp_i2c_sda_pin;
+
+	HAL_GPIO_GPO(pin, 1);
+	delay_1ms(1);
+	HAL_GPIO_RESET(pin);
+	delay_1ms(1);
+}
+
+
 void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 {
 
@@ -83,6 +208,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 				MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 3, 1 << 3); // cfg3[4:3]=1  i2c1 pin
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 9);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 9);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 9);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 9);
 		break;
 		case 1:
@@ -90,6 +216,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 			MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 5, 1 << 5);
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 10);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 10);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 10);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 10);
 		break;
 		case 2:
@@ -100,6 +227,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 				MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 6, 1 << 6);
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 11);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 11);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 11);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 11);
 		break;
 		case 3:
@@ -107,6 +235,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 			MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 8, 1 << 8);
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 12);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 12);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 12);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 12);
 		break;
 		case 4:
@@ -114,6 +243,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 			MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 9, 1 << 9);
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 13);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 13);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 13);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 13);
 		break;
 		case 5:
@@ -121,6 +251,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 			MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 10, 1 << 10);
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 14);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 14);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 14);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 14);
 		break;
 		case 6:
@@ -131,6 +262,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 				MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 11, 1 << 11);
 			MOON2_REG_AO->clken[8] =  RF_MASK_V_SET(1 << 15);
 			MOON2_REG_AO->gclken[8] = RF_MASK_V_CLR(1 << 15);
+			MOON0_REG_AO->reset[8] = RF_MASK_V_SET(1 << 15);
 			MOON0_REG_AO->reset[8] = RF_MASK_V_CLR(1 << 15);
 		break;
 		case 7:
@@ -141,6 +273,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 				MOON1_REG_AO->sft_cfg[3] = RF_MASK_V(1 << 13, 1 << 13);
 			MOON2_REG_AO->clken[9] =  RF_MASK_V_SET(1 << 0);
 			MOON2_REG_AO->gclken[9] = RF_MASK_V_CLR(1 << 0);
+			MOON0_REG_AO->reset[9] = RF_MASK_V_SET(1 << 0);
 			MOON0_REG_AO->reset[9] = RF_MASK_V_CLR(1 << 0);
 		break;
 		case 8:
@@ -151,6 +284,7 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 				MOON1_REG_AO->sft_cfg[4] = RF_MASK_V(1 << 0, 1 << 0);
 			MOON2_REG_AO->clken[9] =  RF_MASK_V_SET(1 << 1);
 			MOON2_REG_AO->gclken[9] = RF_MASK_V_CLR(1 << 1);
+			MOON0_REG_AO->reset[9] = RF_MASK_V_SET(1 << 1);
 			MOON0_REG_AO->reset[9] = RF_MASK_V_CLR(1 << 1);
 		break;
 		case 9:
@@ -161,12 +295,13 @@ void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 				MOON1_REG_AO->sft_cfg[4] = RF_MASK_V(1 << 2, 1 << 2);
 			MOON2_REG_AO->clken[9] =  RF_MASK_V_SET(1 << 2);
 			MOON2_REG_AO->gclken[9] = RF_MASK_V_CLR(1 << 2);
+			MOON0_REG_AO->reset[9] = RF_MASK_V_SET(1 << 2);
 			MOON0_REG_AO->reset[9] = RF_MASK_V_CLR(1 << 2);
 		break;
 		}
 }
 
-void sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *data_buf ,unsigned int len,enum sp_i2c_speed speed)
+int sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *data_buf ,unsigned int len,enum sp_i2c_speed speed)
 {
 
         unsigned int temp_reg;
@@ -301,12 +436,16 @@ void sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *d
 	temp_reg = i2c_regs->ic_clr_intr;
 	i2c_regs->ic_enable = 0;
 
+	if (i2c_mas_ctlr[i2c_no].xfet_action == 1)
+		return I2C_TX_OK ;
+	else
+		return I2C_TX_ERR ;
 }
 
-void sp_i2c_write(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned int len, enum sp_i2c_speed speed)
+int sp_i2c_write(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned int len, enum sp_i2c_speed speed)
 {
 
-        unsigned int temp_reg;			
+        unsigned int temp_reg;
         unsigned int xfer_cnt;
         unsigned int xfer_wait;
         u32 stat;
@@ -402,9 +541,15 @@ void sp_i2c_write(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned
 	i2c_regs->ic_intr_mask = 0;
 	temp_reg = i2c_regs->ic_clr_intr;
 	i2c_regs->ic_enable = 0;
+
+	if (i2c_mas_ctlr[i2c_no].xfet_action == 1)
+		return I2C_TX_OK ;
+	else
+		return I2C_TX_ERR ;
 }
 
-void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned int len, enum sp_i2c_speed speed)
+
+int sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned int len, enum sp_i2c_speed speed)
 {
         unsigned int temp_reg;
         unsigned int xfer_cnt;
@@ -536,4 +681,9 @@ void sp_i2c_read(unsigned int i2c_no, u8  slave_addr , u8  *data_buf , unsigned 
 	i2c_regs->ic_intr_mask = 0;
 	temp_reg = i2c_regs->ic_clr_intr;
 	i2c_regs->ic_enable = 0;
+
+	if (i2c_mas_ctlr[i2c_no].xfet_action == 1)
+		return I2C_TX_OK ;
+	else
+		return I2C_TX_ERR ;
 }
