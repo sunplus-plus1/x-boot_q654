@@ -173,6 +173,7 @@ static void init_hw(void)
 	#define RT5759_I2C_ADDR 0x62
 
 	u8 buf[2];
+	u8 chk;
 
 	// I2C7,X1 (GPIO): 86, 87
 	// Set driving strength to 6 (min: 6.8mA, typ: 9.9mA).
@@ -185,18 +186,29 @@ static void init_hw(void)
 
 	// Read ID of RT5759. ID of RT5759 should be 0x82.
 	buf[0] = 0;
-	if(sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD)) {
-		sp_i2c_sda_pin_rst(RT5759_I2C_CH, I2C_PIN_MODE0);
-		sp_i2c_en(RT5759_I2C_CH, I2C_PIN_MODE0);
-		sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD);
-	}
-	sp_i2c_read(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD);
-	prn_string("ID of RT5759 = "); prn_byte0(buf[0]); prn_string("\n");
-	if (buf[0] == 0x82) {
-		buf[0] = 0x02;                  // Set VID to 0x14.
-		buf[1] = 0x14;                  //
-		sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 2, SP_I2C_SPEED_STD);
-		_delay_1ms(1);
+	for (chk = 0; chk <= 1; chk++) {
+		if(chk == 1) {
+			sp_i2c_sda_pin_rst(RT5759_I2C_CH, I2C_PIN_MODE0);
+			sp_i2c_en(RT5759_I2C_CH, I2C_PIN_MODE0);
+		}
+
+		if(sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD)) 
+			continue;
+
+		if(sp_i2c_read(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD))
+			continue;
+
+		prn_string("ID of RT5759 = "); prn_byte0(buf[0]); prn_string("\n");
+
+		if (buf[0] == 0x82) {
+			buf[0] = 0x02;                  // Set VID to 0x14.
+			buf[1] = 0x14;                  //
+			if(sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD))
+				continue;
+			else
+				break;
+			_delay_1ms(1);
+		}
 	}
 	#endif
 #elif defined(CONFIG_REGULATOR_STI8070X)

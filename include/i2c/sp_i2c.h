@@ -117,6 +117,7 @@ struct i2c_master_ctlr {
 struct i2c_master_ctlr i2c_mas_ctlr[I2C_NO];
 
 void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode);
+void sp_i2c_sda_pin_rst(unsigned int i2c_no, enum sp_i2c_pin_mode mode);
 int sp_i2c_restart_one(unsigned int i2c_no,u8  slave_addr ,u8  reg_addr ,u8  *data_buf ,unsigned int len,enum sp_i2c_speed speed);
 int sp_i2c_write(unsigned int i2c_no, u8  slave_addr, u8  *data_buf, unsigned int len, enum sp_i2c_speed speed);
 int sp_i2c_read(unsigned int i2c_no, u8  slave_addr, u8  *data_buf, unsigned int len, enum sp_i2c_speed speed);

@@ -185,10 +185,11 @@ int get_sp_i2c_sda_pin(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 	return pin;
 }
 
-int sp_i2c_sda_pin_rst(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
+void sp_i2c_sda_pin_rst(unsigned int i2c_no, enum sp_i2c_pin_mode mode)
 {
-	int pin = get_sp_i2c_sda_pin;
+	int pin;
 
+	pin = get_sp_i2c_sda_pin(i2c_no, mode);
 	HAL_GPIO_GPO(pin, 1);
 	delay_1ms(1);
 	HAL_GPIO_RESET(pin);
