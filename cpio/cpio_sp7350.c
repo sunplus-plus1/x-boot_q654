@@ -1017,6 +1017,9 @@ void cpio_test(void)
 	int i;
 
 	prn_string("\n\n--- CPIO-R test Begin ----\n\n");
+	if (MOON0_REG_AO->stamp != 0xA30) {
+		MOON4_REG_AO->sft_cfg[13] = 0x00010000;	// MIPI_CPIO_SEL = 0 for version B or above
+	}
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
 #if 0 // Enable CPIOR_CLK
 	MOON1_REG_AO->sft_cfg[1]  = 0x02000000;		// GMAC_SEL_SEL = 0
@@ -1261,6 +1264,9 @@ void cpio_slave(void)
 
 	prn_string("\n\n---- CPIO-R slave mode Begin ----\n\n");
 	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
+	if (MOON0_REG_AO->stamp != 0xA30) {
+		MOON4_REG_AO->sft_cfg[13] = 0x00010000;	// MIPI_CPIO_SEL = 0 for version B or above
+	}
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
 
 	data_tmp = MOON0_REG_AO->reset[1];
@@ -1424,6 +1430,9 @@ void cpio_master(void)
 
 	prn_string("\n\n---- CPIO-R master mode Begin ----\n\n");
 	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
+	if (MOON0_REG_AO->stamp != 0xA30) {
+		MOON4_REG_AO->sft_cfg[13] = 0x00010000;	// MIPI_CPIO_SEL = 0 for version B or above
+	}
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
 
 	data_tmp = MOON0_REG_AO->reset[1];

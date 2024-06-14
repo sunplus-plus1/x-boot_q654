@@ -192,7 +192,7 @@ static void init_hw(void)
 			sp_i2c_en(RT5759_I2C_CH, I2C_PIN_MODE0);
 		}
 
-		if(sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD)) 
+		if(sp_i2c_write(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD))
 			continue;
 
 		if(sp_i2c_read(RT5759_I2C_CH, RT5759_I2C_ADDR, buf, 1, SP_I2C_SPEED_STD))
@@ -305,7 +305,7 @@ static void init_hw(void)
 
 #if CONFIG_CPIO_OFF_MODE
 	/* Switch the shared analog macro to MIPI RX mode for MIPI-CSI RX2/3 */
-	MOON4_REG_AO->sft_cfg[23] = RF_MASK_V((1 << 3), (1 << 3));
+	MOON4_REG_AO->sft_cfg[23] = RF_MASK_V_SET(0x8);
 
 	if (MOON0_REG_AO->stamp == 0xA30) {
 		/* This workaround is for MIPI-CSI RX3 malfunction issue. Enabling the BIST
@@ -315,6 +315,8 @@ static void init_hw(void)
 		MOON2_REG_AO->clken[3] = RF_MASK_V_SET(0x4);
 		*(volatile u32 *)0xf800539c = 0x00020003;		// BIST_INCLK_EN(G167.7[17])
 		MOON2_REG_AO->clken[3] = RF_MASK_V_CLR(0x4);
+	} else {
+		MOON4_REG_AO->sft_cfg[13] = RF_MASK_V_SET(0x1);		// Set MIPI_CPIO_SEL to 1 for version B or above.
 	}
 #endif
 
