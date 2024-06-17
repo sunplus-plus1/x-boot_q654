@@ -114,7 +114,6 @@ struct i2c_master_ctlr {
 
 	u8 *buf;
 };
-struct i2c_master_ctlr i2c_mas_ctlr[I2C_NO];
 
 void sp_i2c_en(unsigned int i2c_no, enum sp_i2c_pin_mode mode);
 void sp_i2c_sda_pin_rst(unsigned int i2c_no, enum sp_i2c_pin_mode mode);

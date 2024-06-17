@@ -1,6 +1,8 @@
 #include <common.h>
 #include <i2c/sp_i2c.h>
 
+struct i2c_master_ctlr i2c_mas_ctlr[I2C_NO];
+
 static u32 i2c_sp_read_clear_intrbits(unsigned int i2c_no, volatile struct dw_i2c_regs *i2c_regs)
 {
 	unsigned int stat;
