@@ -1017,7 +1017,12 @@ void cpio_test(void)
 	int i;
 
 	prn_string("\n\n--- CPIO-R test Begin ----\n\n");
-	if (MOON0_REG_AO->stamp != 0xA30) {
+	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
+	if (MOON0_REG_AO->stamp == 0xA30) {
+		MOON2_REG_AO->clken[3] = 0x00040004;	// MIPICSI2_CLKEN = 1
+		*(volatile u32 *)0xf800539c = 0x00000003;// BIST_INCLK_EN(G167.7[17])
+		MOON2_REG_AO->clken[3] = 0x00040000;	// MIPICSI2_CLKEN = 0
+	} else {
 		MOON4_REG_AO->sft_cfg[13] = 0x00010000;	// MIPI_CPIO_SEL = 0 for version B or above
 	}
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
@@ -1264,7 +1269,11 @@ void cpio_slave(void)
 
 	prn_string("\n\n---- CPIO-R slave mode Begin ----\n\n");
 	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
-	if (MOON0_REG_AO->stamp != 0xA30) {
+	if (MOON0_REG_AO->stamp == 0xA30) {
+		MOON2_REG_AO->clken[3] = 0x00040004;	// MIPICSI2_CLKEN = 1
+		*(volatile u32 *)0xf800539c = 0x00000003;// BIST_INCLK_EN(G167.7[17])
+		MOON2_REG_AO->clken[3] = 0x00040000;	// MIPICSI2_CLKEN = 0
+	} else {
 		MOON4_REG_AO->sft_cfg[13] = 0x00010000;	// MIPI_CPIO_SEL = 0 for version B or above
 	}
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
@@ -1430,7 +1439,11 @@ void cpio_master(void)
 
 	prn_string("\n\n---- CPIO-R master mode Begin ----\n\n");
 	MOON2_REG_AO->clken[1] = 0x00020002;		// CPIOR_CLKEN = 1
-	if (MOON0_REG_AO->stamp != 0xA30) {
+	if (MOON0_REG_AO->stamp == 0xA30) {
+		MOON2_REG_AO->clken[3] = 0x00040004;	// MIPICSI2_CLKEN = 1
+		*(volatile u32 *)0xf800539c = 0x00000003;// BIST_INCLK_EN(G167.7[17])
+		MOON2_REG_AO->clken[3] = 0x00040000;	// MIPICSI2_CLKEN = 0
+	} else {
 		MOON4_REG_AO->sft_cfg[13] = 0x00010000;	// MIPI_CPIO_SEL = 0 for version B or above
 	}
 	MOON4_REG_AO->sft_cfg[23] = 0x00080000;		// EN_MIPI0_RX = 0
