@@ -3,7 +3,7 @@ sinclude ../.config
 OUT     = ./
 XBOOT_NAME = xboot
 
-WARMBOOT_CROSS  ?= ../../../../crossgcc/gcc-arm-9.2-2019.12-x86_64-arm-none-eabi/bin/arm-none-eabi-
+WARMBOOT_CROSS  ?= $(TOOLCHAIN_AARCH32_PATH)/bin/$(TOOLCHAIN_AARCH32_PREFIX)-
 
 GCC = $(WARMBOOT_CROSS)gcc
 CPP = $(WARMBOOT_CROSS)cpp

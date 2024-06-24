@@ -4,7 +4,7 @@ OUT     = ./
 A64_NAME = a64up
 
 #A64_CROSS    ?= ../../../build/tools/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
-A64_CROSS    ?= ../../../../../../crossgcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
+A64_CROSS    ?= $(TOOLCHAIN_AARCH64_PATH)/bin/$(TOOLCHAIN_AARCH64_PREFIX)-
 
 A64_CFLAGS  += -Os -Wall -g -nostdlib -fno-builtin -I../../../../include -I../../../../ext_config
 A64_CFLAGS  += -march=armv8-a

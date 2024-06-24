@@ -3,7 +3,7 @@ sinclude ../.config
 OUT     = ./
 A64_NAME = a64up
 
-A64_CROSS_COMPILE   = ../../../../crossgcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
+A64_CROSS_COMPILE   = $(TOOLCHAIN_AARCH64_PATH)/bin/$(TOOLCHAIN_AARCH64_PREFIX)-
 
 ifneq ($(A64_CROSS_COMPILE),)
 GCC = $(A64_CROSS_COMPILE)gcc
