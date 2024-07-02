@@ -68,8 +68,8 @@ struct romvsr {
 #ifndef XBOOT_BUILD
 extern const struct romvsr * const p_romvsr;
 #else
-extern void *__rom_vsr_base;
-#define p_romvsr ((const struct romvsr * const)(&__rom_vsr_base))
+extern struct romvsr __rom_vsr_base;
+#define p_romvsr (&__rom_vsr_base)
 #endif
 
 #endif
