@@ -2090,16 +2090,22 @@ void check_ldo(void)
 	char data = 0;
 
 #ifdef CONFIG_HAVE_OTP
-	otprx_read(HB_GP_REG, SP_OTPRX_REG, 68, &data);
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 13, &data);
+	//prn_string("OTP13 = "); prn_byte0(data); prn_string("\n");
+	//prn_string("SDIO_BGDEC = "); prn_byte0(data & 0x0f); prn_string("\n");
+	//prn_string("SDIO_TRIM = "); prn_byte0((data >> 4) & 0x0f); prn_string("\n");
 #endif
-	if(data & 0x01)
-		*(volatile u32 *)(0xf88032d8) |= 0x00000004;		//SD LDO resistor mode
+	if((data >> 4) == 0x01)
+		*(volatile u32 *)(0xf88032d8) |= 0x00000004;	//SD LDO resistor mode
 	data = 0;
 #ifdef CONFIG_HAVE_OTP
-	otprx_read(HB_GP_REG, SP_OTPRX_REG, 70, &data);
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 14, &data);
+	//prn_string("OTP14 = "); prn_byte0(data); prn_string("\n");	
+	//prn_string("SD_BGDEC = "); prn_byte0(data & 0x0f); prn_string("\n");
+	//prn_string("SD_TRIM = "); prn_byte0((data >> 4) & 0x0f); prn_string("\n");
 #endif
-	if(data & 0x01)
-		*(volatile u32 *)(0xf88032dc) |= 0x00000004;		//SDIO LDO resistor mod
+	if((data >> 4) == 0x01)
+		*(volatile u32 *)(0xf88032dc) |= 0x00000004;	//SDIO LDO resistor mode
 }
 
 void xboot_main(void)
