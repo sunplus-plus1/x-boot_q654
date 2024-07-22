@@ -52,7 +52,7 @@ static int sp7350_load_otp_Sb_pub_key(u8 in_pub[32])
 	prn_string("load OTP Sb_Kpub\n");
 #if 0 //test code for use test-keys
 	//#include "../secure/test-keys/ed_pub_0.inc"
-	//#include "../../../build/tools/secure_hsm/secure/otp_Sb_keys/ed_pub_0.inc"
+	//#include "../../../build/tools/secure_sp7350/secure/otp_Sb_keys/ed_pub_0.inc"
 	memcpy(in_pub, ed_pub_0, 32);
 	prn_string("Test pub-key:\n");
 #else
@@ -78,7 +78,7 @@ static int sp7350_load_otp_Device_priv_key(u8 in_priv[32])
 	prn_string("load OTP Dev_Kpriv\n");
 #if 0 //test code for use test-keys
 	//#include "../secure/test-keys/x_priv_0.inc"
-	//#include "../../../build/tools/secure_hsm/secure/otp_Device_keys/ed_pub_0.inc"
+	//#include "../../../build/tools/secure_sp7350/secure/otp_Device_keys/ed_pub_0.inc"
 	memcpy(in_priv, x_priv_0, 32);
 	prn_string("Test priv-key:\n");
 #else

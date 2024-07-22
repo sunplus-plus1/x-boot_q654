@@ -16,24 +16,6 @@ struct xboot_hdr {
 };
 
 
-/* hsm_keys data will be part of encrypted xboot body. See boot.ldi . */
-#define HSM_KEY_MAGIC     0x4b4d5348   // HSMK (H=48h)
-struct hsm_keys {
-	u32 magic;
-
-	// ROM_CODE will apply those keys and clear these key fileds.
-	u32 key_duk[4];     // Device Unique Key (HSM KGK is generated from DUK and KPF)
-	u32 key_bbr[4];     // semc BBR key
-	u32 key_app0[4];    // semc APP0 key
-	u32 key_app1[4];    // semc APP1 key
-	u32 key_adc[4];     // semc ADC key
-
-	// Reserved for user_keys[]
-	u32 len_user_keys;  // byte length of user_keys[]
-	u8  user_keys[4];   // user key (length can vary)
-
-} __attribute__((packed));
-
 
 /*
  * security info (appended after xboot.bin)

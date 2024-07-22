@@ -309,19 +309,6 @@ a64bin:
 	@$(MAKE) -C arch/arm/sp7350/a64up/
 	@$(CROSS)objcopy -I binary -O elf32-littlearm -B arm --rename-section .data=.a64bin arch/arm/sp7350/a64up/a64up.bin arch/arm/sp7350/a64up/a64bin.o
 
-HSMK_BIN=../../build/tools/secure_hsm/secure/hsm_keys/hsmk.bin
-HSMK_OBJ=../../build/tools/secure_hsm/secure/hsm_keys/hsmk.o
-
-hsmk:
-ifeq ($(SECURE),1)
-	@echo "Build hsm key obj"
-	@if [ ! -f $(HSMK_BIN) ];then \
-		echo "Not found hsm key bin: $(HSMK_BIN)" ; \
-		exit 1; \
-	 fi
-	@$(CROSS)objcopy -I binary -O elf32-littlearm -B arm --rename-section .data=.hsmk $(HSMK_BIN) $(HSMK_OBJ)
-endif
-
 #################
 # dependency
 .depend: $(ASOURCES) $(CSOURCES)

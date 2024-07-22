@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ../../build/tools/secure_hsm/secure/sb_info.sh_inc
+source ../../build/tools/secure_sp7350/secure/sb_info.sh_inc
 
 # $1: val
 # $2: 1=no reverse

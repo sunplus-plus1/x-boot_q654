@@ -197,8 +197,8 @@ static u8 *dst, *p2;
 #ifdef CONFIG_ENCRYPTION
 #if 0 // FOR TEST
 #define sp_load_keys()
-#include "../../../build/tools/secure_hsm/secure/otp_Device_keys/x_priv_0.inc"
-#include "../../../build/tools/secure_hsm/secure/otp_Sb_keys/ed_pub_0.inc"
+#include "../../../build/tools/secure_sp7350/secure/otp_Device_keys/x_priv_0.inc"
+#include "../../../build/tools/secure_sp7350/secure/otp_Sb_keys/ed_pub_0.inc"
 #else
 uint8_t x_priv_0[32];
 uint8_t ed_pub_0[32];
