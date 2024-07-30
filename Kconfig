@@ -60,6 +60,10 @@ choice
 		bool "Hosinglobal HG4XD04G"
 		help
 		  Hosinglobal HG4XD04G, 1Gbx32, 2 rank
+	config BWMZCX32H2A
+		bool "Biwin BWMZCX32H2A"
+		help
+		  Biwin BWMZCX32H2A, 1Gbx32, 1 rank
 endchoice
 
 choice
