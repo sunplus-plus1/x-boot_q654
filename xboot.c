@@ -141,6 +141,10 @@ static void init_hw(void)
 	MOON2_REG_AO->clken[3] = RF_MASK_V_CLR(0xffff);		// Stop VIN, MIPIRX
 	MOON2_REG_AO->clken[4] = RF_MASK_V_CLR(0xdfff);		// Stop Semaphore, PRNG, VIN
 	MOON2_REG_AO->clken[5] = RF_MASK_V_CLR(0xf380);		// Stop USB3, USB2, UA3/2/1
+	// For usb3 vbus eco settings, it is ok for none eco chip.
+	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(0x1000);		// Enable usb2 phy
+	UPHY0_RN_REG->gctrl[1] |= 1 << 31;
+	//
 	MOON2_REG_AO->clken[6] = RF_MASK_V_CLR(0x4077);		// Stop NPU, Crypto, PNAND, AXI-DMA, Video codec
 	MOON2_REG_AO->clken[7] = RF_MASK_V_CLR(0x3010);		// Stop UA7/6, Audio
 	MOON2_REG_AO->clken[8] = RF_MASK_V_CLR(0xfe70);		// Stop I2C6/5/4/3/2/1/0, PWM, ADC, AHB-DMA
