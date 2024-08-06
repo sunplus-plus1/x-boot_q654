@@ -39,6 +39,7 @@ void uphy_init(void)
 	_delay_1ms(1);
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 14); // U3PHY0_RESET=0
 	MOON0_REG_AO->reset[5] = RF_MASK_V_CLR(1 << 13); // USB30C0_RESET=0
+	_delay_1ms(1);
 
 #ifndef CONFIG_BOOT_ON_ZEBU
 	dwc3phy_reg = (volatile struct uphy_u3_regs *) UPHY0_U3_REG;
