@@ -333,7 +333,7 @@ UINT8 AHB_data_slave_reset(UINT8 u8_port_num) {
 UINT8 AHB_slave_memory_space(UINT8 u8_ahb_slave_memory_size)
 {
 
-	NANDC_8BIT(OFFSET_AHB_MEM) &= ~0xff;
+	NANDC_8BIT(OFFSET_AHB_MEM) &= 0x0;
 	NANDC_8BIT(OFFSET_AHB_MEM) |= u8_ahb_slave_memory_size;
 
 	g_bootinfo.g_u32_ahb_memory_space = (u8_ahb_slave_memory_size << 9);//xt: why << 9
