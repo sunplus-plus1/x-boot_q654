@@ -22,7 +22,7 @@ XBOOT_CFLAGS += -Wno-pointer-to-int-cast
 XBOOT_LD_SRC   = xboot.ldi
 XBOOT_LD_GEN   = xboot.ld
 XBOOT_LDFLAGS  = -L $(shell dirname `$(GCC) -print-libgcc-file-name`) -lgcc
-XBOOT_LDFLAGS += -Wl,--gc-sections
+XBOOT_LDFLAGS += -Wl,--gc-sections,--no-warn-rwx-segments
 
 
 XBOOT_ASRC  = start.S
