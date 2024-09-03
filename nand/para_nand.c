@@ -91,7 +91,8 @@ UINT8 Resetflash(struct flash_info *flash_readable_info)
 	UINT8 u8_channel = 0;
 	UINT8 u8_starting_ce = 0;
 
-	struct command_queue_feature reset_cmd_feature = { 0 };
+	struct command_queue_feature reset_cmd_feature;
+	memset(&reset_cmd_feature, 0, sizeof(reset_cmd_feature));
 	struct command_queue_feature *p_reset_cmd_feature = &reset_cmd_feature;
 
 	reset_cmd_feature.Flash_type = flash_readable_info->u8_flash_access_mode;
