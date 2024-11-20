@@ -339,9 +339,11 @@ static void init_hw(void)
 #endif
 
 	// Turn off power of NPU (NPU_PWR_EN, GPIO65).
-	HAL_GPIO_GPO(65, 0);
 	PMC_REGS->pmc_iso_pwd = 0xFFAA5500;
 	PMC_REGS->pmc_iso_en |= 0x10;
+	delay_1ms(1);
+	HAL_GPIO_GPO(65, 0);
+	MOON0_REG_AO->reset[6] = RF_MASK_V_SET(1 << 14); // NPU_RESET=1
 
 	// Turn on power of Video codec (VV_PWR_EN, GPIO66).
 	HAL_GPIO_GPO(66, 1);
