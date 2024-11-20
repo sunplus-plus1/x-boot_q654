@@ -345,8 +345,26 @@ static void init_hw(void)
 	HAL_GPIO_GPO(65, 0);
 	MOON0_REG_AO->reset[6] = RF_MASK_V_SET(1 << 14); // NPU_RESET=1
 
-	// Turn on power of Video codec (VV_PWR_EN, GPIO66).
-	HAL_GPIO_GPO(66, 1);
+	if (MOON0_REG_AO->stamp == 0xA30) {
+		// Turn on power of Video codec (VV_PWR_EN, GPIO66).
+		HAL_GPIO_GPO(66, 1);
+	}
+	else {
+		// Turn off power of Video codec (VV_PWR_EN, GPIO66).
+		PMC_REGS->pmc_iso_en &= 0x20;//Video ISO Enable
+		HAL_GPIO_GPO(66, 0);
+		MOON0_REG_AO->reset[6] = RF_MASK_V_SET(1 << 2); // VIDEO_CODEC_RESET=1
+		MOON0_REG_AO->reset[6] = RF_MASK_V_SET(1 << 1); // VCE_RESET=1
+		MOON0_REG_AO->reset[6] = RF_MASK_V_SET(1 << 0); // VCD_RESET=1
+
+		// Turn on power of Video codec (VV_PWR_EN, GPIO66).
+		HAL_GPIO_GPO(66, 1);
+		delay_1ms(1);
+		PMC_REGS->pmc_iso_en &= 0xDF;//Video ISO Disable
+		MOON0_REG_AO->reset[6] = RF_MASK_V_CLR(1 << 2); // VIDEO_CODEC_RESET=0
+		MOON0_REG_AO->reset[6] = RF_MASK_V_CLR(1 << 1); // VCE_RESET=0
+		MOON0_REG_AO->reset[6] = RF_MASK_V_CLR(1 << 0); // VCD_RESET=0
+	}
 
 	// Turn on power of Main (MAIN_PWR_EN, GPIO67).
 	HAL_GPIO_GPO(67, 1);
