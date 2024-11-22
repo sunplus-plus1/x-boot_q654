@@ -27,14 +27,14 @@ extern void boot_reset(void);
 #define MAX_TEST_UNIT_READY_TRY   5
 
 // usb spec 2.0 Table 7-3  VHSDSC (min, max) = (525, 625)
-// default = 586.5 mV (405 + 11 * 16.5)
-// update  = 619.5 mV (405 + 13 * 16.5)
-#define DEFAULT_UPHY_DISC   0xd   // 13 (=619.5mV)
-#define ORIG_UPHY_DISC      0xb   // 11 (=586.5mV)
+// default = 576.3 mV (374 + 7 * 28.9)
+#define DEFAULT_UPHY_DISC   0x7   // 7 (= 576.3mV)
 
 // UPHY 0 init
 void u2phy_init(void)
 {
+	unsigned int val, set;
+
 	// 1. enable UPHY0 & USBC0 CLOCK */
 	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 15); // USBC0_CLKEN=1
 	MOON2_REG_AO->clken[5] = RF_MASK_V_SET(1 << 12); // UPHY0_CLKEN=1
@@ -71,7 +71,12 @@ void u2phy_init(void)
 	UPHY0_RN_REG->cfg[19] |= 0x0f;
 
 	// 7. USB DISC (disconnect voltage)
-	UPHY0_RN_REG->cfg[7] = 0x8b;
+	val = (HB_GP_REG->reserved_8[11] >> 8);
+        set = val & 0x1f;
+        if (!set)
+                set = DEFAULT_UPHY_DISC;
+
+        UPHY0_RN_REG->cfg[7] = (UPHY0_RN_REG->cfg[7] & 0xffffffe0) | set;
 
 	// 8. RX SQUELCH LEVEL
 	UPHY0_RN_REG->cfg[25] = 0x4;
