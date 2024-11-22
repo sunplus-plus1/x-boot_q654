@@ -359,7 +359,7 @@ static void init_hw(void)
 
 		// Turn on power of Video codec (VV_PWR_EN, GPIO66).
 		HAL_GPIO_GPO(66, 1);
-		delay_1ms(1);
+		delay_1ms(5);
 		PMC_REGS->pmc_iso_en &= 0xDF;//Video ISO Disable
 		MOON0_REG_AO->reset[6] = RF_MASK_V_CLR(1 << 2); // VIDEO_CODEC_RESET=0
 		MOON0_REG_AO->reset[6] = RF_MASK_V_CLR(1 << 1); // VCE_RESET=0
