@@ -491,8 +491,12 @@ static int run_draminit(void)
 #ifdef CONFIG_AP6256_WL_REG_ON_GPIO56
 	HAL_GPIO_GPO(56, 0);
 	prn_string("Set WL_REG_ON (GPIO56) to HI.\n");
-	GPIO_OUT_REG->gpio_out[56 / 16] = 0x10001 << (56 % 16);
 	HAL_GPIO_O_SET(56, 1);
+#endif
+#ifdef CONFIG_AP6275S_WL_REG_ON_GPIO59
+	HAL_GPIO_GPO(59, 0);
+	prn_string("Set WL_REG_ON (GPIO59) to HI.\n");
+	HAL_GPIO_O_SET(59, 1);
 #endif
 
 	return 0;
