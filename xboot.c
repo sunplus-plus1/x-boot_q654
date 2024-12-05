@@ -2106,9 +2106,9 @@ static u32 read_mp_bit(void)
 	u32  mp_bit;
 
 #ifdef CONFIG_HAVE_OTP
-	otprx_read(HB_GP_REG, SP_OTPRX_REG, 1, &data);
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 0, &data);
 #endif
-	mp_bit = (data >> 4) & 0x1;
+	mp_bit = (data >> 2) & 0x1;
 
 	return mp_bit;
 }
@@ -2149,7 +2149,7 @@ void xboot_main(void)
 
 	g_bootinfo.in_xboot = 1;
 
-	/* Is MP chip? Silent UART */
+	/* Silent UART by IBOOT_SILENT (read in iboot) instead of MP */
 	g_bootinfo.mp_flag = read_mp_bit();
 
 	init_uart();

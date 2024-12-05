@@ -16,18 +16,12 @@ static void uart_wait(void)
 
 void dbg_uart_putc(unsigned char c)
 {
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
         uart_wait();
         DBG_UART_REG->dr = c;
 }
 
 void _dbg_info(char *file, u32 line)
 {
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 	prn_string("[d] ");
 	prn_string(file);
 	prn_string(" :");
@@ -37,9 +31,6 @@ void _dbg_info(char *file, u32 line)
 
 void prn_string(const char *str)
 {
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 	while (*str) {
 		if (*str == '\n')
 			UART_put_byte('\r');
@@ -51,10 +42,6 @@ void prn_string(const char *str)
 void prn_byte(unsigned char b)
 {
 	char c;
-
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 
 	c = (b >> 4);
 	if(c < 0xA) UART_put_byte(c + 0x30);
@@ -69,10 +56,6 @@ void prn_dword0(unsigned int w)
 {
 	char c, i;
 
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
-
 	UART_put_byte('0');
 	UART_put_byte('x');
 	for(i=1; i<=8; i++) {
@@ -86,10 +69,6 @@ void prn_byte0(unsigned char b)
 {
 	char c, i;
 
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
-
 	UART_put_byte('0');
 	UART_put_byte('x');
 	for (i = 1; i <= 2; i++) {
@@ -101,9 +80,6 @@ void prn_byte0(unsigned char b)
 
 void prn_dword(unsigned int w)
 {
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 	prn_dword0(w);
 	UART_put_byte('\n');
 	UART_put_byte('\r');
@@ -113,10 +89,6 @@ void prn_decimal(unsigned int num)
 {
 	char a[16];
 	int  i = 0;
-
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 
 	do {
 		a[i] = num % 10;
@@ -132,9 +104,6 @@ void prn_decimal(unsigned int num)
 
 void prn_decimal_ln(unsigned int num)
 {
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 	prn_decimal(num);
 	UART_put_byte('\n');
 	UART_put_byte('\r');
@@ -143,10 +112,6 @@ void prn_decimal_ln(unsigned int num)
 void prn_dump_buffer(unsigned char *buf, int len)
 {
 	int i;
-
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 
 	for (i = 0; i < len; i++) {
 		if (i && !(i & 0xf)) {
@@ -161,10 +126,6 @@ void prn_dword0_for_lpddr4(unsigned int w)
 {
 	char c, i;
 
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
-
 	for(i=1; i<=8; i++) {
 		c = (w >> (32 - (i<<2)) ) & 0xF;
 		if(c < 0xA) UART_put_byte(c + 0x30);
@@ -175,9 +136,6 @@ void prn_dword0_for_lpddr4(unsigned int w)
 
 void prn_string_for_lpddr4(const char *str, unsigned int a, unsigned int b)
 {
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 	while (*str) {
 		if (*str == '\n')
 			UART_put_byte('\r');
@@ -332,10 +290,6 @@ void diag_printf(const char *fmt, ...)
 {
 	char buf[256];
 	va_list args;
-
-	if (g_bootinfo.mp_flag) {
-		return;
-	}
 
 	va_start(args, fmt);
 	diag_snprintf(buf, 256, fmt, args);
