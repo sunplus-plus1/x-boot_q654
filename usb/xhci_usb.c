@@ -894,7 +894,7 @@ int usb_parse_config(unsigned char *buffer, int cfgno)
 	head = (struct usb_descriptor_header *) &buffer[index];
 	while (index + 1 < g_io_buf.usb.xhci.udev.config.desc.wTotalLength && head->bLength) {
 #ifdef XHCI_DEBUG
-		prn_string("  	config.desc.bLength "); prn_dword(head->bDescriptorType);
+		prn_string("  	head->bDescriptorType "); prn_dword(head->bDescriptorType);
 		prn_string("  	index "); prn_dword(index);
 #endif
 
@@ -1002,7 +1002,7 @@ int usb_parse_config(unsigned char *buffer, int cfgno)
 				break;
 			}
 #ifdef XHCI_DEBUG
-                        prn_string("\n!!!!!unknown Description Type!!!!!");
+                        prn_string("\n!!!!!unknown Description Type!!!!!\n");
 #endif
 
 			break;
@@ -2206,11 +2206,12 @@ void USB_vendorCmd(u8 bReq, u8 bCmd, u16 wValue, u16 wIndex, u16 wLen)
 	}
 	if (bCmd == USB_REQ_SET_CONFIGURATION)
 		set_configuration(&g_io_buf.usb.xhci);
+
 	memset(g_io_buf.usb.cmd_buf, 0, 1024);
 	ctrl_tx(&psetup_packet, psetup_packet.length, g_io_buf.usb.cmd_buf, pipe);
 #ifdef XHCI_DEBUG
 	if (g_io_buf.usb.xhci.udev.act_len != psetup_packet.length) {
-		prn_string("\n!!!!!usb_get_configuration_len != length!!!!!");
+		prn_string("\n!!!!!usb_get_configuration_len != length!!!!! cmd "); prn_dword(bCmd);
 	}
 #endif
 }
@@ -2234,11 +2235,21 @@ void usb_select_config(pUSB_DevDesc pDev)
 	USB_vendorCmd(USB_DIR_IN, USB_REQ_GET_DESCRIPTOR, DESC_DEVICE, 0, 0x12);
 	memcpy(g_io_buf.usb.xhci.reserved, USB_dataBuf, 0x12);
 	_delay_1ms(1);
-//usb_get_configuration_len
+	//usb_string
+	prn_string("\n  	pDev->bDeviceClass "); prn_dword(pDev->bDeviceClass);
 #ifdef XHCI_DEBUG
+	prn_string("  	pDev->bDeviceProtocol "); prn_dword(pDev->bDeviceProtocol);
+	prn_string("  	pDev->iManufacturer "); prn_dword(pDev->iManufacturer);
+	prn_string("  	pDev->iProduct "); prn_dword(pDev->iProduct);
+	prn_string("  	pDev->iSerialNumber "); prn_dword(pDev->iSerialNumber);
+
+//usb_get_configuration_len
 	prn_string("\n**<usb_get_configuration_len>**");
 #endif
 	USB_vendorCmd(USB_DIR_IN, USB_REQ_GET_DESCRIPTOR, DESC_CONFIGURATION, 0, 0x9);
+	// run hub(9) and storage(0) only
+	if (pDev->bDeviceClass != 9 && pDev->bDeviceClass != 0)
+		return;
 
 //usb_get_configuration_no
 #ifdef XHCI_DEBUG
@@ -2263,14 +2274,7 @@ void usb_select_config(pUSB_DevDesc pDev)
 #endif
 	USB_vendorCmd(0, USB_REQ_SET_CONFIGURATION, pCfg->bCV, 0, 0);
 	_delay_1ms(10);
-//usb_string
-#ifdef XHCI_DEBUG
-	prn_string("\n  	pDev->bDeviceClass "); prn_dword(pDev->bDeviceClass);
-	prn_string("  	pDev->bDeviceProtocol "); prn_dword(pDev->bDeviceProtocol);
-	prn_string("  	pDev->iManufacturer "); prn_dword(pDev->iManufacturer);
-	prn_string("  	pDev->iProduct "); prn_dword(pDev->iProduct);
-	prn_string("  	pDev->iSerialNumber "); prn_dword(pDev->iSerialNumber);
-#endif
+
 	g_io_buf.usb.xhci.udev.string_langid = 0;
 	if (pDev->iManufacturer)
 		usb_string(pDev->iManufacturer, g_io_buf.usb.xhci.udev.mf, sizeof(g_io_buf.usb.xhci.udev.mf));
@@ -2316,7 +2320,7 @@ u32 port_test(u32 i)
 	u32 val_64, tmp;
 	struct usb_port_status portst;
 
-	prn_string("port "); prn_decimal(i);
+	prn_string("port "); prn_decimal(i); prn_string("\n");
 
 	usb_get_port_status(i, &portst);
 	if (!(portst.wPortStatus & USB_PORT_STAT_CONNECTION) && !(portst.wPortChange & USB_PORT_STAT_CONNECTION)) {
@@ -2351,7 +2355,7 @@ u32 port_test(u32 i)
 			USB_vendorCmd(0x23, USB_REQ_CLEAR_FEATURE, 20, i, 0);
 			//prn_string("\n port 1 Reset the port end "); prn_dword(g_io_buf.usb.xhci.hcor->portregs[0].or_portsc);
 #ifdef XHCI_DEBUG
-			prn_string("\n**<port 1/2 Reset the port end**> ");
+			prn_string("\n<**port 1/2 Reset the port end**> ");
 #endif
 			g_io_buf.usb.xhci.udev.devnum++; //new device start, devnum 1 is root hub.
 			g_io_buf.usb.xhci.udev.portnr[g_io_buf.usb.xhci.udev.devnum] = i;
@@ -2397,8 +2401,7 @@ int usb_init(int port, int next_port_in_hub)
 	CSTAMP(0xE5B00000);
 	dbg();
 
-	if (next_port_in_hub == 0)
-	{
+	if (next_port_in_hub == 0) {
 		u32 tmp1, tmp2, i;
 		u8 Hub_NbrPorts_root;
 		struct dwc3 *dwc3_reg;
@@ -2623,7 +2626,7 @@ int usb_init(int port, int next_port_in_hub)
 #if defined(CONFIG_HAVE_USB3_HUB)
 					update_hub_device(&g_io_buf.usb.xhci, pDev, pHub);
 #ifdef XHCI_DEBUG
-					prn_string("  	pHub->bNbrPorts "); prn_dword(g_io_buf.usb.xhci.udev.Hub_NbrPorts);
+					prn_string("  	$$pHub->bNbrPorts "); prn_dword(g_io_buf.usb.xhci.udev.Hub_NbrPorts);
 #endif
 					for (trb_64 = 1; trb_64 <= g_io_buf.usb.xhci.udev.Hub_NbrPorts; trb_64++) {
  						USB_vendorCmd(0x23, USB_REQ_SET_FEATURE, 8, trb_64, 0);//usb_hub_power_on, USB_PORT_FEAT_POWER = 8
@@ -2632,7 +2635,7 @@ int usb_init(int port, int next_port_in_hub)
 					next_port_in_hub++;
 					break;
 #endif
-				} else {
+				} else if (pDev->bDeviceClass == 0) {
 					usb_storage();//usb_storage
 					//break;
 					prn_string("\n");
@@ -2671,7 +2674,7 @@ int usb_init(int port, int next_port_in_hub)
 //usb_select_config
 			usb_select_config(pDev);
 
-			if (pDev->bDeviceClass == 9)
+			if (pDev->bDeviceClass != 0)
 				continue;
 			else
 				usb_storage();//usb_storage
