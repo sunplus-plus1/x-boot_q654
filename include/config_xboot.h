@@ -9,7 +9,7 @@
 
 #define SPI_DTB_OFFSET        0x048000   // 288K
 #define SPI_UBOOT_OFFSET      0x068000   // 416K
-#define SPI_FIP_OFFSET        0x128000   // 1M+160K
+#define SPI_FIP_OFFSET		  0x141000	 // 1M+260K
 #define SPI_LINUX_OFFSET      0x200000   // 2M
 
 
