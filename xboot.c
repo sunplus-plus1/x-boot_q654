@@ -76,6 +76,8 @@ __attribute__ ((section("boothead_sect")))       u8                  g_boothead[
 __attribute__ ((section("xboot_header_sect")))   u8                  g_xboot_buf[32];
 
 fat_info g_finfo;
+static int product_id = 0;
+static unsigned int adc_val = 0;
 
 static void halt(void)
 {
@@ -116,6 +118,648 @@ static void set_pad_driving_strength(u32 pin, u32 strength)
 	else
 		PAD_CTL_REG->driving_selector3[reg_off] &= ~bit_mask;
 }
+
+#define BOARD_TYPE_ADDR 0xfa23ff00
+static void detect_dvb_board_type()
+{
+	u32 ret;
+	u32 i2c_port=7;	// GPIO-86/87
+	u8 buf[2];
+
+	// Identify board type by pmic i2c read, DVB1P pmic @I2C3 and DVB pmic @I2C7
+	if ( g_bootinfo.board_id == BOARD_DVB/* || g_bootinfo.board_id == BOARD_DVB1P */) {
+		sp_i2c_en(i2c_port, I2C_PIN_MODE0);
+		_delay_1ms(1);
+
+		// Read power status of IP6103 slave addr is 0x30, (regs = 0x5/0x6). Default status should be 0x0F/0x7F, means DC0~3/LDO0~6 enabled.
+		buf[0] = 0x05;
+#if 0
+		ret = sp_i2c_write(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+		if (ret != I2C_TX_OK) {
+			if (g_bootinfo.board_id == BOARD_DVB)
+				g_bootinfo.board_id = BOARD_DVB1P; //micron 4GB & PMIC I2C3 is DVB1P
+		}
+#endif
+	}
+	*(volatile u32*)(BOARD_TYPE_ADDR) =  0x00000000;
+#if 0
+	if (g_bootinfo.board_id == BOARD_DVB1P) {
+		if((adc_val>=0)&&(adc_val<=20))
+		{
+			*(volatile u32*)(BOARD_TYPE_ADDR) =  0xfefe;
+			prn_string("board_type dv1-plus micron");
+		}
+		else
+		{
+			*(volatile u32*)(BOARD_TYPE_ADDR) =  0xfefa;
+			prn_string("board_type dv1-plus samsung");
+		}
+	}
+#endif
+	if (g_bootinfo.board_id == BOARD_DVB) {
+		*(volatile u32*)(BOARD_TYPE_ADDR) = 0xfafe;
+		prn_string("board_type dvb1 micorn");
+	}
+}
+
+static int set_ca55_power_ip6103(u32 voltage)
+{
+	// Set CA55 power (VDD_CA55) to 0.8V/1.0V.
+	// IP6103 is connected at I2C7/I2C3.
+	u32 ret;
+	u32 i2c_port=3;
+	u8 buf[2];
+
+	if (g_bootinfo.board_id == BOARD_DVB)
+		i2c_port = 7;
+	if (g_bootinfo.board_id == BOARD_DVB2/* || g_bootinfo.board_id == SPARK_BOARD || g_bootinfo.board_id == BOARD_DVB1P*/)
+		i2c_port = 3;
+
+	// Initialize I2C.
+	sp_i2c_en(i2c_port, I2C_PIN_MODE0);
+	_delay_1ms(1);
+
+	// Read power status of IP6103 slave addr is 0x30, (regs = 0x5/0x6). Default status should be 0x0F/0x7F, means DC0~3/LDO0~6 enabled.
+	buf[0] = 0x05;
+	ret = sp_i2c_write(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		return -1;
+	}
+	ret = sp_i2c_read(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		if(ret == I2C_TX_ERR)
+			return -1;
+		//while(ret == I2C_BUSCLEAR ){
+		//	ret = sp_i2c_read(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+		//}
+	}
+	prn_string("\nIP6103 power status DCDC = "); prn_dword((int)*buf);
+	buf[0] = 0x06;
+	ret = sp_i2c_write(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		return -1;
+	}
+	ret = sp_i2c_read(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		if(ret == I2C_TX_ERR)
+			return -1;
+		//while(ret == I2C_BUSCLEAR ){
+		//	ret = vc_i2c_read(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+		//}
+	}
+	prn_string("IP6103 power status LDOs = "); prn_dword((int)*buf);
+	buf[0] = 0x35;
+	buf[1] = 0xb0;
+	ret = sp_i2c_write(i2c_port, 0x30, buf, 2, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		return -1;
+	}
+	_delay_1ms(1);
+
+	buf[0] = 0x2F;  //DCDC2
+	if (voltage > 1000) {
+		buf[1] = (1000-600)/12.5;
+	} else if (voltage < 700) {
+		buf[1] = (700-600)/12.5;
+	} else {
+		buf[1] = (voltage-600)/12.5;
+	}
+	ret = sp_i2c_write(i2c_port, 0x30, buf, 2, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		return -1;
+	}
+	_delay_1ms(1);
+	buf[0] = 0x2F;
+	ret = sp_i2c_write(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		return -1;
+	}
+	ret = sp_i2c_read(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+	if (ret != I2C_TX_OK) {
+		//if(ret == I2C_TX_ERR)
+			return -1;
+		//while(ret == I2C_BUSCLEAR ){
+		//	ret = sp_i2c_read(i2c_port, 0x30, buf, 1, SP_I2C_SPEED_STD);
+		//}
+	}
+	prn_string("IP6103 DCDC2 = "); prn_dword((int)*buf);
+
+	return 0;
+
+}
+
+static int set_ca55_power(u32 voltage)
+{
+	if ( set_ca55_power_ip6103(voltage) == 0 ) {
+		prn_string("set_ca55_power_ip6103 voltage done.\n");
+		return 0;
+	}
+	prn_string("set_ca55_power failed.\n");
+	return -1;
+}
+
+static void init_otp_data(void)
+{
+	int i;
+	char tmp;
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 0xe, (char *)&OTP_INFO_DATA->sd_vsel);
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 0xd, (char *)&OTP_INFO_DATA->sdio_vsel);
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 0x3b, (char *)&OTP_INFO_DATA->ca55_vsel);
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 7, (char *)&OTP_INFO_DATA->mipitx_vset);
+	for(i=0; i<3; i++){
+		otprx_read(HB_GP_REG, SP_OTPRX_REG, 9+i, (char *)&OTP_INFO_DATA->therm_calib[i]);
+	}
+	for(i=0; i<3; i++){
+		otprx_read(HB_GP_REG, SP_OTPRX_REG, 42+i, (char *)&OTP_INFO_DATA->chip_id[i]);
+	}
+	for(i=0; i<6; i++){
+		otprx_read(HB_GP_REG, SP_OTPRX_REG, 22+i, (char *)&OTP_INFO_DATA->mac_addr[i]);
+	}
+	otprx_read(HB_GP_REG, SP_OTPRX_REG, 12, &tmp);
+	tmp = tmp>>3;
+	tmp =tmp &3;
+	if(tmp == 1){
+		OTP_INFO_DATA->cpu_freq = 1500000000;
+	}else if(tmp == 3) {
+		OTP_INFO_DATA->cpu_freq = 1800000000;
+	}else {
+		OTP_INFO_DATA->cpu_freq = 2100000000;
+	}
+}
+
+#if defined(CONFIG_BOARD_DVB) || defined(CONFIG_BOARD_DVB2)
+#undef PLLD_800MHz
+#endif
+static void init_hw_2(void)
+{
+	int i;
+	char otp_cpu_npu;
+
+	u8 PLLC_2100MHz =FALSE;
+	u8 PLLC_1800MHz =FALSE;
+	u8 PLLC_1500MHz =FALSE;
+	u8 PLLC_1200MHz =FALSE;
+
+	u8 PLL3_1800MHz =FALSE;
+	u8 PLL3_1500MHz =FALSE;
+	u8 PLL3_1300MHz =FALSE;
+	u8 PLL3_1000MHz =FALSE;
+
+	u8 PLLN_900MHz =FALSE;
+	u8 PLLN_450MHz =FALSE;
+	u8 PLLN_225MHz =FALSE;
+
+	u8 PLLD_800MHz =FALSE;
+	u8 PLLD_666MHz =FALSE;
+	u8 PLLD_600MHz =FALSE;
+	u8 PLLD_533MHz =FALSE;
+	u8 PLLD_466MHz =FALSE;
+	u8 PLLD_400MHz =FALSE;
+	u8 PLLD_366MHz =FALSE;
+	u8 PLLD_333MHz =FALSE;
+	u8 PLLD_300MHz =FALSE;
+	u8 PLLD_266MHz =FALSE;
+	u8 PLLD_233MHz =FALSE;
+	u8 PLLD_200MHz =FALSE;
+	// enable CA55_SYS_TIMER
+	volatile u32 *r = (void *)0xf810a000;
+	r[2] = 0xfffffff0; // set cntl
+	r[3] = 0xf; // set cntu
+	r[0] = 0x3; // en=1 & hdbg=1
+
+	// Set SPI-NOR to non-secure mode (secure_enable=0).
+	*(volatile u32 *)(0xf8000b18) = *(volatile u32 *)(0xf8000b18) & 0xfffeffff;
+
+#ifdef CONFIG_CA55_JTAG_ENABLE
+	MOON1_REG_AO->sft_cfg[1] = RF_MASK_V_SET(0x0100);  /* *(volatile u32 *)(0xf8800084)=0x01000100 enable jtag pin*/
+#endif
+	/* clken[all]  = enable */
+	//for (i = 0; i < sizeof(MOON2_REG_AO->clken) / 4; i++)
+		//MOON2_REG_AO->clken[i] = RF_MASK_V_SET(0xffff);
+
+	/* gclken[all] = no */
+	for (i = 0; i < sizeof(MOON2_REG_AO->gclken) / 4; i++)
+		MOON2_REG_AO->gclken[i] = RF_MASK_V_CLR(0xffff);
+
+	/* reset[all] = clear */
+	for (i = 0; i < sizeof(MOON0_REG_AO->reset) / 4; i++) {
+		if (i == 7) {
+			MOON0_REG_AO->reset[i] = RF_MASK_V_CLR(0x7fff);// dont clear cm4 to avoid cm4 reset error
+		}
+		else {
+			MOON0_REG_AO->reset[i] = RF_MASK_V_CLR(0xffff);
+		}
+	}
+
+	// Remap DRAM (0xf0000000 ~ 0xffffffff) to (0x100000000 ~ 0x10fffffff).
+	MOON5_REG->sft_cfg[0] = RF_MASK_V((1 << 0), (1 << 0));
+
+	// SD-CARD      : 38, 39, 40, 41, 42, 43
+	// SDIO         : 44, 45, 46, 47, 48, 49
+	for (i = 38; i <= 43; i++)
+		set_pad_driving_strength(i, 8);
+	for (i = 44; i <= 49; i++)
+		set_pad_driving_strength(i, 3);
+
+	//sdio softpad adjust,do not bypass input data,delay 1 DFF
+	PAD_CTL2_REG->sdio_softpad_ctrl[0] = 0;
+	PAD_CTL2_REG->sdio_softpad_ctrl[1] = 0x3e;
+
+	//sd softpad adjust,do not bypass input data,delay 1 DFF
+	PAD_CTL2_REG->sd_softpad_ctrl[0] = 0;
+	PAD_CTL2_REG->sd_softpad_ctrl[1] = 0x3e;
+
+	// G-MAC: TXD0(7), TXD1(8), MDC(9), TXC(10), TXEN(11), MDIO(12), TXD2(15), TXD3(16)
+	// Set driving strength to 5 (min.: 14.2mA, typ.: 18.9mA).
+	for (i = 7; i <= 12; i++)
+		set_pad_driving_strength(i, 5);
+	set_pad_driving_strength(15, 5);
+	set_pad_driving_strength(16, 5);
+	/*i2c7 1mbps*/
+	set_pad_driving_strength(86, 6);
+	set_pad_driving_strength(87, 6);
+
+	//eMMC
+	set_pad_driving_strength(20, 5);
+	for (i = 28; i <= 36; i++)
+		set_pad_driving_strength(i, 5);
+	delay_1ms(1);
+
+	//eMMC  softpad adjust
+	PAD_CTL2_REG->emmc_softpad_ctrl[0] &= ~(1 << 31);
+	PAD_CTL2_REG->emmc_softpad_ctrl[1] &= ~(1 << 20);
+	PAD_CTL2_REG->emmc_softpad_ctrl[2] |= (0x1ff << 21);
+	//prn_string("emmc softpad adjust\n");
+	//prn_dword(PAD_CTL2_REG->cfg[23]);
+	//prn_dword(PAD_CTL2_REG->cfg[22]);
+
+	//dpll clk
+	set_pad_driving_strength(1, 5);
+
+	/* adc get board_id */
+	u32 adc_buf[4];
+
+	sp_adc_read(2, &adc_buf[2]);
+	delay_1ms(1);
+	adc_buf[2] = 0;
+	sp_adc_read(2, &adc_buf[2]);
+
+#if defined(CONFIG_BOARD_DVB) || defined(CONFIG_BOARD_DVB2)
+	if (0 <= adc_buf[2] && 20 >= adc_buf[2])
+		g_bootinfo.board_id = BOARD_DVB;
+	if (144 <= adc_buf[2] && 228 >= adc_buf[2])
+		g_bootinfo.board_id = BOARD_DVB2;
+#endif
+
+	diag_printf("adc2=%d, board_id=0x%x\n", adc_buf[2], g_bootinfo.board_id);
+
+	if (0/*g_bootinfo.board_id == EVB_BOARD*/) {
+		PLLC_1800MHz = TRUE;
+		PLL3_1500MHz = TRUE;
+		PLLN_900MHz  = TRUE;
+		PLLD_800MHz = TRUE;  //DDR Data rate 3200 Mbps
+		//prn_string("CPU = 1.8GHz, L3 = 1.5GHz, NPU = 4.5TOPS, DDR = 3200Mbps\n");
+		//NPU info show as xTOPS to N6*x, such 4.5TOPS to N27
+		prn_string("PLLC:1.8, PLL3:1.5, N27, PLLD:0.8\n");
+		prn_string("Product is EVB, id = ");
+		prn_dword(product_id);
+	} else {
+		/* Get CPU L3 NPU OTP, bit[103:100] */
+		if (!otprx_read(HB_GP_REG, SP_OTPRX_REG, 12, &otp_cpu_npu)) {
+			otp_cpu_npu = (otp_cpu_npu >> 4);
+			/* OTP bit[101:100] for CPU/L3 FREQ LOCK, 00|10:2100|1800(no lock) 01:1500|1300 11:1800|1500 */
+			if ((otp_cpu_npu & 0x3) == 0x3) {
+				set_ca55_power(920);  //set CPU core voltage to 0.92V for freq 1.8GHz SS/DVB1P/TT/FF
+				PLLC_1800MHz = TRUE;  //OTP fuse CPU max freq to 1.8GHz
+				PLL3_1500MHz = TRUE;  //OTP fuse L3 max freq to 1.5GHz
+				//prn_string("CPU = 1.8 GHz, L3 = 1.5 GHz, ");
+				prn_string("PLLC:1.8, PLL3:1.5, ");
+			} else if((otp_cpu_npu & 0x3) == 0x1) {
+				set_ca55_power(790);  //set CPU core voltage to 0.79V for freq 1.5GHz SS/DVB1P/TT/FF
+				PLLC_1500MHz = TRUE;  //OTP fuse CPU max freq to 1.5GHz
+				PLL3_1300MHz = TRUE;  //OTP fuse L3 max freq to 1.3GHz
+				//prn_string("CPU = 1.5 GHz, L3 = 1.3 GHz, ");
+				prn_string("PLLC:1.5, PLL3:1.3, ");
+			} else if(((otp_cpu_npu & 0x3) == 0) || ((otp_cpu_npu & 0x3) == 0x2)) {
+				set_ca55_power(920);  //set CPU core voltage to 0.92V for freq 1.8GHz SS/DVB1P/TT/FF
+				PLLC_1800MHz = TRUE;  //OTP fuse CPU max freq to 1.8GHz
+				PLL3_1500MHz = TRUE;  //OTP fuse L3 max freq to 1.5GHz
+				//prn_string("CPU = 1.8 GHz, L3 = 1.5 GHz, ");
+				prn_string("PLLC:1.8, PLL3:1.5, ");
+			}
+			/* OTP bit[103:102] for NPU FREQ LOCK, 00:900M 01:900M/2 10:900M/4 11:0(disable reset) */
+			if ((otp_cpu_npu & 0xC) == 0x4) {
+				PLLN_900MHz = TRUE;
+				//prn_string("NPU = 2 TOPS, ");
+				prn_string("N12, ");
+			} else if ((otp_cpu_npu & 0xC) == 0x8) {
+				PLLN_900MHz = TRUE;
+				//prn_string("NPU = 1 TOPS, ");
+				prn_string("N6, ");
+			} else if ((otp_cpu_npu & 0xC) == 0) {
+				PLLN_900MHz = TRUE;
+				//prn_string("NPU = 4.5 TOPS, ");
+				prn_string("N27, ");
+			} else if ((otp_cpu_npu & 0xC) == 0xC) {
+				PLLN_900MHz = TRUE;
+				//prn_string("NPU = 0 TOPS, ");
+				prn_string("N0, ");
+			}
+		} else {
+			prn_string("Get CPU L3 NPU OTP fuse fail, use default settings:\n");
+			//prn_string("CPU = 1.8 GHz, L3 = 1.5 GHz, NPU = 4.5 TOPS, DDR = 2666 Mbps\n");
+			prn_string("PLLC:1.8, PLL3:1.5, N27, PLLD:0.666\n");
+			set_ca55_power(920);  //set CPU core voltage to 0.92V for freq 1.8GHz SS/DVB1P/TT/FF
+			PLLC_1800MHz = TRUE;
+			PLL3_1500MHz = TRUE;
+			PLLN_900MHz  = TRUE;
+		}
+		/* Get product id */
+		product_id = optrx_product_id_read(HB_GP_REG, SP_OTPRX_REG, 63);
+		if (product_id == SP7350) {
+			PLLD_666MHz = TRUE;  //DDR Data rate 2666 Mbps
+			OTP_INFO_DATA->product_id = 7350;
+			//prn_string("DDR = 2666 Mbps\n");
+			prn_string("PLLD:0.666\n");
+			//prn_string("Product is VC6601, id = ");
+		} else {
+			PLLD_800MHz = TRUE;  //DDR Data rate 3200 Mbps
+			OTP_INFO_DATA->product_id = 8801;
+			//prn_string("DDR = 3200 Mbps\n");
+			prn_string("PLLD:0.8");
+			//prn_string("Product is VC8801, id = ");
+		}
+		prn_dword(product_id);
+	}
+
+	if (PLLC_2100MHz == TRUE) {
+		/* Set PLLC to 2.1G */
+		//prn_string("Set PLLC to 2.1GHz\n");
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_SET(0x0001); // Switch CPU clock to PLLS_CK200M.
+		MOON3_REG_AO->pllc_cfg[0] = RF_MASK_V(0xffff, 0x0A00); // FBKDIV = 0x14, PSTDIV = 0, PREDIV = 0
+		MOON3_REG_AO->pllc_cfg[1] = RF_MASK_V(0xffff, 0xC0BE); // BNKSEL = 2
+		MOON3_REG_AO->pllc_cfg[2] = RF_MASK_V(0xffff, 0x0107);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_CLR(0x0001); // Switch CPU clock back to PLLC.
+	} else if (PLLC_1800MHz == TRUE) {
+		/* Set PLLC to 1.8G */
+		//prn_string("Set PLLC to 1.8GHz\n");
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_SET(0x0001); // Switch CPU clock to PLLS_CK200M.
+		MOON3_REG_AO->pllc_cfg[0] = RF_MASK_V(0xffff, 0x0400); // FBKDIV = 0x8, PSTDIV = 0, PREDIV = 0
+		MOON3_REG_AO->pllc_cfg[1] = RF_MASK_V(0xffff, 0xC0BD); // BNKSEL = 1
+		MOON3_REG_AO->pllc_cfg[2] = RF_MASK_V(0xffff, 0x0107);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_CLR(0x0001); // Switch CPU clock back to PLLC.
+	} else if (PLLC_1500MHz == TRUE) {
+		/* Set PLLC to 1.5G */
+		//prn_string("Set PLLC to 1.5GHz\n");
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_SET(0x0001); // Switch CPU clock to PLLS_CK200M.
+		MOON3_REG_AO->pllc_cfg[0] = RF_MASK_V(0xffff, 0x1C02); // FBKDIV = 0x38, PSTDIV = 0, PREDIV = 1
+		MOON3_REG_AO->pllc_cfg[1] = RF_MASK_V(0xffff, 0xC0BC); // BNKSEL = 0
+		MOON3_REG_AO->pllc_cfg[2] = RF_MASK_V(0xffff, 0x010B);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_CLR(0x0001); // Switch CPU clock back to PLLC.
+	} else if (PLLC_1200MHz == TRUE) {
+		/* Set PLLC to 1.2G */
+		//prn_string("Set PLLC to 1.2GHz\n");
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_SET(0x0001); // Switch CPU clock to PLLS_CK200M.
+		MOON3_REG_AO->pllc_cfg[0] = RF_MASK_V(0xffff, 0x1002); // FBKDIV = 0x20, PSTDIV = 0, PREDIV = 1
+		MOON3_REG_AO->pllc_cfg[1] = RF_MASK_V(0xffff, 0xC0BC); // BNKSEL = 0
+		MOON3_REG_AO->pllc_cfg[2] = RF_MASK_V(0xffff, 0x010B);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[1] = RF_MASK_V_CLR(0x0001); // Switch CPU clock back to PLLC.
+	}
+
+
+	//prn_string("PLLC[0] = "); prn_dword(MOON3_REG_AO->pllc_cfg[0]);
+	//prn_string("PLLC[1] = "); prn_dword(MOON3_REG_AO->pllc_cfg[1]);
+	if (PLL3_1800MHz == TRUE) {
+		/* Set PLLL3 to 1.8G */
+		//prn_string("Set PLLL3 to 1.8GHz\n");
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x8 << 12)); // Switch L3 clock to PLLS_CK200M.
+		MOON3_REG_AO->plll3_cfg[0] = RF_MASK_V(0xffff, 0x0400); // FBKDIV = 0x8, PSTDIV = 0, PREDIV = 0
+		MOON3_REG_AO->plll3_cfg[1] = RF_MASK_V(0xffff, 0xC0BD); // BNKSEL = 1
+		MOON3_REG_AO->plll3_cfg[2] = RF_MASK_V(0xffff, 0x0107);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x0 << 12)); // Switch L3 clock back to PLLL3.
+	} else if (PLL3_1500MHz == TRUE) {
+		/* Set PLLL3 to 1.5G */
+		//prn_string("Set PLLL3 to 1.5GHz\n");
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x8 << 12)); // Switch L3 clock to PLLS_CK200M.
+		MOON3_REG_AO->plll3_cfg[0] = RF_MASK_V(0xffff, 0x1C02); // FBKDIV = 0x38, PSTDIV = 0, PREDIV = 1
+		MOON3_REG_AO->plll3_cfg[1] = RF_MASK_V(0xffff, 0xC0BC); // BNKSEL = 0
+		MOON3_REG_AO->plll3_cfg[2] = RF_MASK_V(0xffff, 0x010B);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x0 << 12)); // Switch L3 clock back to PLLL3.
+	} else if (PLL3_1300MHz == TRUE) {
+		/* Set PLLL3 to 1.3G */
+		//prn_string("Set PLLL3 to 1.3GHz\n");
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x8 << 12)); // Switch L3 clock to PLLS_CK200M.
+		MOON3_REG_AO->plll3_cfg[0] = RF_MASK_V(0xffff, 0x1402); // FBKDIV = 0x28, PSTDIV = 0, PREDIV = 1
+		MOON3_REG_AO->plll3_cfg[1] = RF_MASK_V(0xffff, 0xC0BC); // BNKSEL = 0
+		MOON3_REG_AO->plll3_cfg[2] = RF_MASK_V(0xffff, 0x010B);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x0 << 12)); // Switch L3 clock back to PLLL3.
+	} else if (PLL3_1000MHz == TRUE) {
+		/* Set PLLL3 to 1.0G */
+		//prn_string("Set PLLL3 to 1.0GHz\n");
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x8 << 12)); // Switch L3 clock to PLLS_CK200M.
+		MOON3_REG_AO->plll3_cfg[0] = RF_MASK_V(0xffff, 0x0802); // FBKDIV = 0x10, PSTDIV = 0, PREDIV = 1
+		MOON3_REG_AO->plll3_cfg[1] = RF_MASK_V(0xffff, 0xC0BD); // BNKSEL = 1
+		MOON3_REG_AO->plll3_cfg[2] = RF_MASK_V(0xffff, 0x0107);
+		_delay_1ms(1);
+		MOON3_REG_AO->rsvd[0] = RF_MASK_V((0xf << 12), (0x0 << 12)); // Switch L3 clock back to PLLL3.
+	}
+	//prn_string("PLLL3[0] = "); prn_dword(MOON3_REG_AO->plll3_cfg[0]);
+	//prn_string("PLLL3[1] = "); prn_dword(MOON3_REG_AO->plll3_cfg[1]);
+
+	MOON4_REG_AO->sft_cfg[1] = RF_MASK_V_SET(0x80);  // U3PHY SSC on
+
+	*(volatile u32 *)ARM_TSGEN_WR_BASE = 3;          // EN = 1 and HDBG = 1
+	*(volatile u32 *)(ARM_TSGEN_WR_BASE + 0x08) = 0; // CNTCV[31:0]
+	*(volatile u32 *)(ARM_TSGEN_WR_BASE + 0x0C) = 0; // CNTCV[63:32]
+
+	PAD_CTL2_REG->gmac_softpad_ctrl[1] = 0x00000000; // GMAC Softpad control register 1 : bit31-->0 ,non-GPIO mode
+
+	// Turn on power of NPU (NPU_PWR_EN, GPIO65).
+	GPIO_MASTER_REG->gpio_master[65 / 16] = 0x10001 << (65 % 16);
+	GPIO_OUT_REG->gpio_out[65 / 16]       = 0x10001 << (65 % 16);
+	GPIO_OE_REG->gpio_oe[65 / 16]         = 0x10001 << (65 % 16);
+	PAD_CTL_REG->gpio_first[65 / 32]     |=       1 << (65 % 32);
+
+	// Turn on power of Video codec (VV_PWR_EN, GPIO66).
+	GPIO_MASTER_REG->gpio_master[66 / 16] = 0x10001 << (66 % 16);
+	GPIO_OUT_REG->gpio_out[66 / 16]       = 0x10001 << (66 % 16);
+	GPIO_OE_REG->gpio_oe[66 / 16]         = 0x10001 << (66 % 16);
+	PAD_CTL_REG->gpio_first[66 / 32]     |=       1 << (66 % 32);
+	// Turn on power of Main (MAIN_PWR_EN, GPIO67).
+	GPIO_MASTER_REG->gpio_master[67 / 16] = 0x10001 << (67 % 16);
+	GPIO_OUT_REG->gpio_out[67 / 16]       = 0x10001 << (67 % 16);
+	GPIO_OE_REG->gpio_oe[67 / 16]         = 0x10001 << (67 % 16);
+	PAD_CTL_REG->gpio_first[67 / 32]     |=       1 << (67 % 32);
+
+/*
+        //dvb1 95(AO_MX_45) NOT USED.  USE CONFIG_BOARD_DVB for SW compatible
+#if defined(CONFIG_BOARD_DVB_PLUS) || defined(CONFIG_BOARD_DVB)
+        //pull down to activity the rtc domain,GPIO95
+        GPIO_MASTER_REG->gpio_master[95 / 16] = 0x10001 << (95 % 16);
+        GPIO_OUT_REG->gpio_out[95 / 16]       = 0x10001 << (95 % 16);
+        GPIO_OE_REG->gpio_oe[95 / 16]         = 0x10000 << (95 % 16);
+        PAD_CTL_REG->gpio_first[95 / 32]     |=       1 << (95 % 32);
+        delay_1ms(2);
+        GPIO_OE_REG->gpio_oe[95 / 16]         = 0x10001 << (95 % 16);
+#endif
+        //flame 81(AO_MX_31) NOT USED.  USE board_id VC6601_FLAME_BOARD for SW compatible
+	if ( g_bootinfo.board_id == VC6601_FLAME_BOARD ) {
+        //pull down to activity the rtc domain,GPIO81
+        GPIO_MASTER_REG->gpio_master[81 / 16] = 0x10001 << (81 % 16);
+        GPIO_OUT_REG->gpio_out[81 / 16]       = 0x10001 << (81 % 16);
+        GPIO_OE_REG->gpio_oe[81 / 16]         = 0x10000 << (81 % 16);
+        PAD_CTL_REG->gpio_first[81 / 32]     |=       1 << (81 % 32);
+        delay_1ms(2);
+        GPIO_OE_REG->gpio_oe[81 / 16]         = 0x10001 << (81 % 16);
+	}
+
+	if ( g_bootinfo.board_id == VC6601_FLARE5_BOARD ) {
+        //pull down to activity the rtc domain,GPIO87
+        GPIO_MASTER_REG->gpio_master[87 / 16] = 0x10001 << (87 % 16);
+        GPIO_OUT_REG->gpio_out[87 / 16]       = 0x10001 << (87 % 16);
+        GPIO_OE_REG->gpio_oe[87 / 16]         = 0x10000 << (87 % 16);
+        PAD_CTL_REG->gpio_first[87 / 32]     |=       1 << (87 % 32);
+        delay_1ms(2);
+        GPIO_OE_REG->gpio_oe[87 / 16]         = 0x10001 << (87 % 16);
+	}
+*/
+
+	//disable iv_mx0_ad33 pull-up
+	PAD_CTL2_REG->gpio_pe[1] &=  ~(1<< 7);
+	PAD_CTL2_REG->gpio_ps[1] &=  ~(1<< 7);
+	// prn_string("drd id @\n");
+	// prn_dword(PAD_CTL2_REG->gpio_pe[1]);
+	// prn_dword(PAD_CTL2_REG->gpio_ps[1]);
+	//disable g_mx19 pull-up,usb2 id low 0.9v > 0.8v
+	PAD_CTL2_REG->gpio_pe[0] &=  ~(1<< 19);
+	PAD_CTL2_REG->gpio_ps[0] &=  ~(1<< 19);
+	//i2c 6,7,3,4 PE is 0,no pull up/down
+	PAD_CTL2_REG->gpio_pe[0] &=  ~(0xff<< 24);
+	//i2c5 PE is 0
+	PAD_CTL2_REG->gpio_pe[1] &=  ~(0x3<< 0);
+	//i2c0/1/2disable pullup&down
+	PAD_CTL2_REG->dvio_pu[1] &= ~((0xf << 18) |(0x3<<26));
+	PAD_CTL2_REG->dvio_pd[1] &= ~((0xf << 18) |(0x3<<26));
+
+	//add for lcd dvb1+(pin55,ao_max5),flare(pin66,ao_mx16) to no pull up
+	PAD_CTL2_REG->dvio_pu[1] &= ~(0x1 << 5);
+	PAD_CTL2_REG->dvio_pu[1] &= ~(0x1 << 16);
+	//add for lcd backlight set pin60(ao_mx10,pwm mode) to pull down
+	PAD_CTL2_REG->dvio_pu[1] &= ~(0x1 << 10);
+	PAD_CTL2_REG->dvio_pd[1] |= (0x1 << 10);
+
+
+	if (PLLD_800MHz == TRUE) {
+		//prn_string("PLLD: 800MHz, DATARATE:3200\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x1008);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BE);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_666MHz == TRUE) {
+		//prn_string("PLLD: 666.6MHz, DATARATE:2666\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x0808);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BE);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_600MHz == TRUE) {
+		//prn_string("PLLD: 600MHz, DATARATE:2400\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x0408);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BD);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_533MHz == TRUE) {
+		//prn_string("PLLD: 533.3MHz, DATARATE:2133.2\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x200A);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BD);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_466MHz == TRUE) {
+		//prn_string("PLLD: 466.6MHz, DATARATE:1866.4\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x180A);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BC);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_400MHz == TRUE) {
+		//prn_string("PLLD: 400MHz, DATARATE:1600\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x100A);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BC);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_366MHz == TRUE) {
+		//prn_string("PLLD: 366.6MHz, DATARATE:1466.4\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x0C0A);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BC);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_333MHz == TRUE) {
+		//prn_string("PLLD: 333.3MHz, DATARATE:1333\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x080A);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BC);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_300MHz == TRUE) {
+		//prn_string("PLLD: 300MHz, DATARATE:1200\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x8412);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BD);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_266MHz == TRUE) {
+		//prn_string("PLLD: 266.6MHz, DATARATE:1066.4\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x2012);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BD);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_233MHz == TRUE) {
+		//prn_string("PLLD: 233.3MHz, DATARATE:933\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x1812);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BC);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLD_200MHz == TRUE) {
+		//prn_string("PLLD: 200MHz, DATARATE:800\n");
+		MOON3_REG_AO->plld_cfg[0] = RF_MASK_V(0xFFFF, 0x1012);
+		MOON3_REG_AO->plld_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BC);
+		MOON3_REG_AO->plld_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	}
+
+	if (PLLN_900MHz == TRUE) {
+		//prn_string("PLLN: 900MHz \n");
+		MOON3_REG_AO->plln_cfg[0] = RF_MASK_V(0xFFFF, 0x0400);
+		MOON3_REG_AO->plln_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BE);
+		MOON3_REG_AO->plln_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLN_450MHz == TRUE) {
+		//prn_string("PLLN: 450MHz \n");
+		MOON3_REG_AO->plln_cfg[0] = RF_MASK_V(0xFFFF, 0x0408);
+		MOON3_REG_AO->plln_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BE);
+		MOON3_REG_AO->plln_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	} else if (PLLN_225MHz == TRUE) {
+		//prn_string("PLLN: 225MHz \n");
+		MOON3_REG_AO->plln_cfg[0] = RF_MASK_V(0xFFFF, 0x040A);
+		MOON3_REG_AO->plln_cfg[1] = RF_MASK_V(0xFFFF, 0xC0BE);
+		MOON3_REG_AO->plln_cfg[2] = RF_MASK_V(0xFFFF, 0x0107);
+	}
+
+	//config GPIO93 AO_INT Level triger
+	*(volatile u32*)(0xF8802fa0) = *(volatile u32 *)(0xF8802fa0) | 0x08000000;
+	// #ifdef CONFIG_BOARD_SPARK
+	// 	adc_val = 184;	//select FORESEE single rank
+	// #else
+	// 	vc_adc_read(ADC_CHN2, &adc_val);
+	// 	vc_adc_read(ADC_CHN2, &adc_val);
+	// 	vc_adc_read(ADC_CHN2, &adc_val);
+	// 	prn_string("adc_val = ");
+	// 	prn_dword(adc_val);
+	// 	prn_string("\n");
+	// #endif
+	if (g_bootinfo.board_id == BOARD_DVB2) {
+		adc_val = 184;	//select FORESEE single rank, 1GB
+	} else {
+		sp_adc_read(ADC_CHN2, &adc_val);
+		sp_adc_read(ADC_CHN2, &adc_val);
+	}
+	prn_string("adc_val = ");
+	prn_dword(adc_val);
+	prn_string("\n");
+	init_otp_data();
+	// dbg();
+}
+
 
 static void init_hw(void)
 {
@@ -2030,6 +2674,8 @@ static void boot_flow(void)
 		set_spi_nor_pinmux(0);
 	}
 
+	detect_dvb_board_type();
+
 	/* coverity[no_escape] */
 	while (retry-- > 0) {
 		/* Read boot mode */
@@ -2159,7 +2805,11 @@ void xboot_main(void)
 	prn_string("+++xBoot " __DATE__ " " __TIME__ "\n");
 
 	/* init hw */
+#if defined(CONFIG_BOARD_DVB) || defined(CONFIG_BOARD_DVB2)
+	init_hw_2();
+#else
 	init_hw();
+#endif
 
 #ifdef MON
 	mon_shell();

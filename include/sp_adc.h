@@ -5,6 +5,7 @@
 #include <regmap.h>
 #include <types.h>
 
+#define ADC_CHN2	2
 void sp_adc_read(unsigned int adc_chan, unsigned int *adc_buf);
 
 #endif

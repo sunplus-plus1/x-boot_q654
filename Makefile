@@ -51,6 +51,10 @@ ifeq ($(ENCRYPTION),1)
 CFLAGS  += -DCONFIG_ENCRYPTION
 endif
 
+ifeq ($(BOARD),dvb))
+CFLAGS  += -DCONFIG_BOARD_DVB=1
+endif
+
 ################# xboot size config ################
 XBOOT_MAX =$$((96 * 1024))
 

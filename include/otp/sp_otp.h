@@ -60,6 +60,9 @@
 #define OTP_READ_TIMEOUT                400
 #define OTP_WRITE_TIMEOUT               400
 
+#define SP7350                          0x8
+
+int optrx_product_id_read(volatile struct hb_gp_regs *otp_data, volatile struct otprx_regs *regs, int addr);
 int otprx_read(volatile struct hb_gp_regs *otp_data, volatile struct otprx_regs *regs, int addr, char *value);
 int otprx_key_read(volatile struct otp_key_regs *otp_data, volatile struct otprx_regs *regs, int addr, char *value);
 int otprx_write(volatile struct hb_gp_regs *otp_data, volatile struct otprx_regs *regs, int addr, char value);

@@ -170,6 +170,7 @@ struct bootinfo {
 	u32     hw_security;         // hw security
 
 	u32     sb_flag;             // secure boot flag, bit0=1(secure boot)
+	u32     board_id;            // board id
 
 	/*
 	 * ROM code puts all C code global variables here so that :

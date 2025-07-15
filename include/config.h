@@ -103,6 +103,12 @@
 #define SDCARD_BOOT             0xfe
 #define AUTO_SCAN               0xff
 
+#if defined(PLATFORM_SP7350)
+#define BOARD_DVB               0x03
+#define BOARD_DVB2              0x04
+#define BOARD_DVB1P             0x05
+#endif
+
 /************************************
  * Secure boot  xboot-->uboot
  ************************************/

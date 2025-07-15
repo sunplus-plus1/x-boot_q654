@@ -100,3 +100,19 @@ int otprx_write(volatile struct hb_gp_regs *otp_data, volatile struct otprx_regs
 
 	return 0;
 }
+
+int optrx_product_id_read(volatile struct hb_gp_regs *otp_data, volatile struct otprx_regs *regs, int addr)
+{
+	char value;
+	if (!otprx_read(otp_data, regs, addr, &value)) {
+		value = (value >> 4);
+		if (value > 0) {
+			return value;
+		} else {
+			return SP7350;
+		}
+	} else {
+		prn_string("read product id error\n");
+		return -1;
+	}
+}
