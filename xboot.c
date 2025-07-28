@@ -1132,16 +1132,22 @@ static int run_draminit(void)
 	while (1);	// Stop after CPIO completes initialization.
 #endif
 
+	if (g_bootinfo.board_id == BOARD_DVB) {
+		HAL_GPIO_GPO(80, 0);
+		prn_string("Set WL_REG_ON (GPIO80) to HI.\n");
+		HAL_GPIO_O_SET(80, 1);
+	} else {
 #ifdef CONFIG_AP6256_WL_REG_ON_GPIO56
-	HAL_GPIO_GPO(56, 0);
-	prn_string("Set WL_REG_ON (GPIO56) to HI.\n");
-	HAL_GPIO_O_SET(56, 1);
+		HAL_GPIO_GPO(56, 0);
+		prn_string("Set WL_REG_ON (GPIO56) to HI.\n");
+		HAL_GPIO_O_SET(56, 1);
 #endif
 #ifdef CONFIG_AP6275S_WL_REG_ON_GPIO59
-	HAL_GPIO_GPO(59, 0);
-	prn_string("Set WL_REG_ON (GPIO59) to HI.\n");
-	HAL_GPIO_O_SET(59, 1);
+		HAL_GPIO_GPO(59, 0);
+		prn_string("Set WL_REG_ON (GPIO59) to HI.\n");
+		HAL_GPIO_O_SET(59, 1);
 #endif
+	}
 
 	return 0;
 }
