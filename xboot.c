@@ -289,7 +289,6 @@ static void init_otp_data(void)
 
 #if defined(CONFIG_BOARD_DVB) || defined(CONFIG_BOARD_DVB2)
 #undef PLLD_800MHz
-#endif
 static void init_hw_2(void)
 {
 	int i;
@@ -759,7 +758,7 @@ static void init_hw_2(void)
 	init_otp_data();
 	// dbg();
 }
-
+#endif
 
 static void init_hw(void)
 {
