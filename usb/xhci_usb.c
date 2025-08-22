@@ -2236,7 +2236,7 @@ void usb_select_config(pUSB_DevDesc pDev)
 	memcpy(g_io_buf.usb.xhci.reserved, USB_dataBuf, 0x12);
 	_delay_1ms(1);
 	//usb_string
-	prn_string("\n  	pDev->bDeviceClass "); prn_dword(pDev->bDeviceClass);
+	prn_string("pDev->bDeviceClass "); prn_dword(pDev->bDeviceClass);
 #ifdef XHCI_DEBUG
 	prn_string("  	pDev->bDeviceProtocol "); prn_dword(pDev->bDeviceProtocol);
 	prn_string("  	pDev->iManufacturer "); prn_dword(pDev->iManufacturer);
@@ -2248,7 +2248,7 @@ void usb_select_config(pUSB_DevDesc pDev)
 #endif
 	USB_vendorCmd(USB_DIR_IN, USB_REQ_GET_DESCRIPTOR, DESC_CONFIGURATION, 0, 0x9);
 	// run hub(9) and storage(0) only
-	if (pDev->bDeviceClass != 9 && pDev->bDeviceClass != 0)
+	if (pDev->bDeviceClass != 9 && pDev->bDeviceClass != 8 && pDev->bDeviceClass != 0)
 		return;
 
 //usb_get_configuration_no
@@ -2635,7 +2635,7 @@ int usb_init(int port, int next_port_in_hub)
 					next_port_in_hub++;
 					break;
 #endif
-				} else if (pDev->bDeviceClass == 0) {
+				} else if (pDev->bDeviceClass == 0 || pDev->bDeviceClass == 8) {
 					usb_storage();//usb_storage
 					//break;
 					prn_string("\n");
@@ -2674,7 +2674,7 @@ int usb_init(int port, int next_port_in_hub)
 //usb_select_config
 			usb_select_config(pDev);
 
-			if (pDev->bDeviceClass != 0)
+			if (pDev->bDeviceClass != 0 && pDev->bDeviceClass != 8)
 				continue;
 			else
 				usb_storage();//usb_storage
