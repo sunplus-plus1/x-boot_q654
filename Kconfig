@@ -64,6 +64,10 @@ choice
 		bool "Biwin BWMZCX32H2A"
 		help
 		  Biwin BWMZCX32H2A, 1Gbx32, 1 rank
+	config EM6LH32MVAJA
+		bool "Etron EM6LH32MVAJA"
+		help
+		  Etron EM6LH32MVAJA, 1Gbx32, 1 rank	  
 endchoice
 
 choice
