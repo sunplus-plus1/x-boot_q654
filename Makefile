@@ -51,6 +51,10 @@ ifeq ($(ENCRYPTION),1)
 CFLAGS  += -DCONFIG_ENCRYPTION
 endif
 
+ifeq ($(FIP0),1)
+CFLAGS  += -DFIP0
+endif
+
 ################# xboot size config ################
 XBOOT_MAX =$$((96 * 1024))
 

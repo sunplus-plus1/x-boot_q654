@@ -64,9 +64,21 @@
 #define USE_QKBOOT_IMG  // consistent with draminit and uboot image
 
 /* ISP image offset */
+
+#if FIP0
+
+#define ISP_IMG_OFF_XBOOT    (0)
+#define ISP_IMG_OFF_UBOOT    (192  * 1024)
+#define ISP_IMG_OFF_FIP      (1536 * 1024)
+#define ISP_IMG_OFF_HEADER   (2048 * 1024)
+
+#else
+
 #define ISP_IMG_OFF_XBOOT    (0)
 #define ISP_IMG_OFF_UBOOT    (192 * 1024)
 #define ISP_IMG_OFF_HEADER   (1536*1024)
+
+#endif
 
 //
 // ABIO config

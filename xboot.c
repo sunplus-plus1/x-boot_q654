@@ -1134,6 +1134,9 @@ static int fat_load_fip(u32 type)
 			return -1;
 		}
 	}
+	#if FIP0
+		fip_offset=ISP_IMG_OFF_FIP;
+	#endif
 	if (fat_load_uhdr_image(&g_finfo, "fip", (void *)FIP_LOAD_ADDR, ((type==SDCARD_BOOT)?0:fip_offset), FIP_MAX_LEN,type) <= 0) {
 		prn_string("failed to load fip \n");
 		return -1;
