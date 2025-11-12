@@ -67,7 +67,11 @@ choice
 	config EM6LH32MVAJA
 		bool "Etron EM6LH32MVAJA"
 		help
-		  Etron EM6LH32MVAJA, 1Gbx32, 1 rank	  
+		  Etron EM6LH32MVAJA, 1Gbx32, 1 rank
+	config RS512M32LO4D1BDS
+		bool "Rayson RS512M32LO4D1BDS"
+		help
+		  Rayson RS512M32LO4D1BDS, 512Mbx32, 1 rank	  	  
 endchoice
 
 choice
