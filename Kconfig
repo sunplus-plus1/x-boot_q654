@@ -71,7 +71,11 @@ choice
 	config RS512M32LO4D1BDS
 		bool "Rayson RS512M32LO4D1BDS"
 		help
-		  Rayson RS512M32LO4D1BDS, 512Mbx32, 1 rank	  	  
+		  Rayson RS512M32LO4D1BDS, 512Mbx32, 1 rank
+	config IS43LQ32K01B
+		bool "ISSI IS43LQ32K01B"
+		help
+		  ISSI IS43LQ32K01B, 512Mbx32, 1 rank
 endchoice
 
 choice
