@@ -75,11 +75,11 @@ choice
 	config IS43LQ32K01B
 		bool "ISSI IS43LQ32K01B"
 		help
-		  ISSI IS43LQ32K01B, 512Mbx32, 1 rank
+		  ISSI IS43LQ32K01B, 1Gbx32, 1 rank
 	config IS43LQ32K01S2A
 		bool "ISSI IS43LQ32K01S2A-046BLI"
 		help
-		  ISSI IS43LQ32K01S2A-046BLI, 512Mbx32, 2 rank	  
+		  ISSI IS43LQ32K01S2A-046BLI, 1Gbx32, 2 rank	  
 endchoice
 
 choice
