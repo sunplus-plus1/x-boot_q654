@@ -79,7 +79,11 @@ choice
 	config IS43LQ32K01S2A
 		bool "ISSI IS43LQ32K01S2A-046BLI"
 		help
-		  ISSI IS43LQ32K01S2A-046BLI, 1Gbx32, 2 rank	  
+		  ISSI IS43LQ32K01S2A-046BLI, 1Gbx32, 2 rank
+	config H9HCNNN8KUMLHRNME
+		bool "SK hynix H9HCNNN8KUMLHRNME"
+		help
+		  SK hynix H9HCNNN8KUMLHRNME, 256Mbx32, 1 rank		
 endchoice
 
 choice
