@@ -83,7 +83,11 @@ choice
 	config H9HCNNN8KUMLHRNME
 		bool "SK hynix H9HCNNN8KUMLHRNME"
 		help
-		  SK hynix H9HCNNN8KUMLHRNME, 256Mbx32, 1 rank		
+		  SK hynix H9HCNNN8KUMLHRNME, 256Mbx32, 1 rank
+	config KL4B162BQ
+		bool "Keymos KL4B162BQ"
+		help
+		  KEYMOS KL4B162BQ, 2GB, x32, 2 rank
 endchoice
 
 choice
@@ -92,11 +96,19 @@ choice
 	config MT40A512M16TB
 		bool "Micron MT40A512M16TB D8BPK"
 		help
-		  Micron MT40A512M16TB, 512Mx16, 1 rank, FBGA code = D8BPK
+		  Micron MT40A512M16TB, 1GB, x16, 1 rank, FBGA code = D8BPK
 	config K4AAG165WA
 		bool "Samsung K4AAG165WA"
 		help
-		  SAMSUNG K4AAG165WA, 1Gx16, 1 rank
+		  SAMSUNG K4AAG165WA, 1GB, x16, 1 rank
+	config VE4D512M16NC
+		bool "Vecun VE4D512M16NC"
+		help
+		  VECUN VE4D512M16NC, 1GB, x16, 1 rank
+	config PSD4H0B2A
+		bool "Plusetech PSD4H0B2A"
+		help
+		  PLUSETECH PSD4H0B2A, 1GG, x16, 1 rank	  
 endchoice
 
 choice
