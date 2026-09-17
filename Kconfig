@@ -88,6 +88,10 @@ choice
 		bool "Keymos KL4B162BQ"
 		help
 		  KEYMOS KL4B162BQ, 2GB, x32, 2 rank
+	config FLXC2002G
+		bool "Foresee FLXC2002G"
+		help
+		  FORESEE FLXC2002G, 2GB, 512Mbx32, 1 rank	  
 endchoice
 
 choice
