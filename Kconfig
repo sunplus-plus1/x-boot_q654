@@ -32,66 +32,70 @@ choice
 	prompt "LPDDR4 SDRAM part number"
 	depends on PLATFORM_SP7350 && LPDDR4
 	config  NT6AN1024F32AV
-		bool "Nayna NT6AN1024F32AV"
+		bool "Nayna NT6AN1024F32AV 2rank"
 		help
 		  Nanya NT6AN1024F32AV, 1Gbx32, 2 rank
 	config MT53D1024M32D4
-		bool "Micron MT53D1024M32D4 D9WHT"
+		bool "Micron MT53D1024M32D4 D9WHT 2rank"
 		help
 		  Micron MT53D1024M32D4, 1Gbx32, 2 rank, FBGA code = D9WHT
 	config MT53E1G32D2_A
-		bool "Micron MT53E1G32D2_A D9ZQX"
+		bool "Micron MT53E1G32D2_A D9ZQX 1rank"
 		help
 		  Micron MT53E1G32D2_A, 1Gbx32, 1 rank, FBGA code = D9ZQX
 	config MT53E1G32D2_B
-		bool "Micron MT53E1G32D2_B D8CJG"
+		bool "Micron MT53E1G32D2_B D8CJG 2rank"
 		help
 		  Micron MT53E1G32D2_B, 1Gbx32, 2 rank, FBGA code = D8CJG
 	config MT53E2G32D4_C
-		bool "Micron MT53E2G32D4_C D8CJN"
+		bool "Micron MT53E2G32D4_C D8CJN 2rank"
 		help
 		  Micron MT53E2G32D4_C, 2Gbx32, 2 rank, FBGA code = D8CJN
 		  MT53E2G32D4_C
 	config RS1G32LO4D2BDS
-		bool "Rayson RS1G32LO4D2DBS"
+		bool "Rayson RS1G32LO4D2DBS 2rank"
 		help
 		  Rayson RS1G32LO4D2DBS, 1Gbx32, 2 rank
 	config HG4XD04G
-		bool "Hosinglobal HG4XD04G"
+		bool "Hosinglobal HG4XD04G 2rank"
 		help
 		  Hosinglobal HG4XD04G, 1Gbx32, 2 rank
 	config BWMZCX32H2A
-		bool "Biwin BWMZCX32H2A"
+		bool "Biwin BWMZCX32H2A 1rank"
 		help
 		  Biwin BWMZCX32H2A, 1Gbx32, 1 rank
 	config EM6LH32MVAJA
-		bool "Etron EM6LH32MVAJA"
+		bool "Etron EM6LH32MVAJA 1rank"
 		help
 		  Etron EM6LH32MVAJA, 1Gbx32, 1 rank
 	config RS512M32LO4D1BDS
-		bool "Rayson RS512M32LO4D1BDS"
+		bool "Rayson RS512M32LO4D1BDS 1rank"
 		help
 		  Rayson RS512M32LO4D1BDS, 512Mbx32, 1 rank
 	config IS43LQ32K01B
-		bool "ISSI IS43LQ32K01B"
+		bool "ISSI IS43LQ32K01B 1rank"
 		help
 		  ISSI IS43LQ32K01B, 1Gbx32, 1 rank
 	config IS43LQ32K01S2A
-		bool "ISSI IS43LQ32K01S2A-046BLI"
+		bool "ISSI IS43LQ32K01S2A-046BLI 2rank"
 		help
 		  ISSI IS43LQ32K01S2A-046BLI, 1Gbx32, 2 rank
 	config H9HCNNN8KUMLHRNME
-		bool "SK hynix H9HCNNN8KUMLHRNME"
+		bool "SK hynix H9HCNNN8KUMLHRNME 1rank"
 		help
 		  SK hynix H9HCNNN8KUMLHRNME, 256Mbx32, 1 rank
 	config KL4B162BQ
-		bool "Keymos KL4B162BQ"
+		bool "Keymos KL4B162BQ 2rank"
 		help
 		  KEYMOS KL4B162BQ, 2GB, x32, 2 rank
 	config FLXC2002G
-		bool "Foresee FLXC2002G"
+		bool "Foresee FLXC2002G-N2 1rank"
 		help
-		  FORESEE FLXC2002G, 2GB, 512Mbx32, 1 rank	  
+		  FORESEE FLXC2002G-N2, 2GB, 512Mbx32, 1 rank
+	config DL4B08G32X2V
+		bool "SCY DL4B08G32X2V-DC 1rank"
+		help
+		  SCY DL4B08G32X2V-DC, 1GB, 256Mbx32, 1 rank	  	  
 endchoice
 
 choice
