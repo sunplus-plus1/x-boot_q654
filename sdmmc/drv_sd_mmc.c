@@ -10,6 +10,7 @@
 #define MAX_SD_READ_RETRY    32
 
 extern int get_card_number(void);
+int EMMC_DMA_mode = 0;
 
 int initDriver_SD(int port)
 {
@@ -44,8 +45,14 @@ int ReadSDSector(unsigned int sectorNo, unsigned int pageCount, unsigned int *pt
 _Label_ReadSDSector_Again:
 	SD_RST();
 #if defined(CONFIG_HAVE_EMMC) && defined(EMMC_USE_DMA_READ)
-	if (EMMC_SLOT_NUM == get_card_number())
-		Ret = ReadSDMultipleSectorDma(SectorIndex, pageCount, (unsigned char*)ptrPyldData);
+	if (EMMC_SLOT_NUM == get_card_number()){
+	
+		if(EMMC_DMA_mode == 1)
+			Ret = ReadSDMultipleSectorDma(SectorIndex, pageCount, (unsigned char*)ptrPyldData);
+		else
+			Ret = ReadSDMultipleSector(SectorIndex, pageCount, (unsigned char*)ptrPyldData);
+	
+	}
 	else
 #endif
 		Ret = ReadSDMultipleSector(SectorIndex, pageCount, (unsigned char*)ptrPyldData);

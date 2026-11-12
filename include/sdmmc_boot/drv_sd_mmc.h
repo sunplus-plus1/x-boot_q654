@@ -14,4 +14,6 @@ int ReadSDSector(
 	unsigned int* ptrPyldData
 );
 
+extern int EMMC_DMA_mode;  /*0: PIO mode, Dram training load IMEM/DMEM bin code into SRAM */
+						/*1: DMA mode*/
 #endif		//DRV_SD_MMC_H

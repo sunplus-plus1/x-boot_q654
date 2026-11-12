@@ -1289,12 +1289,7 @@ static void uart_isp(u32 forever)
 
 static int emmc_read(u8 *buf, u32 blk_off, u32 count)
 {
-#ifdef EMMC_USE_DMA_READ
-	/* dma mode supports multi-sector read */
 	return ReadSDSector(blk_off, count, (unsigned int *)buf);
-#else
-	return ReadSDSector(blk_off, count, (unsigned int *)buf);
-#endif
 }
 
 /**
@@ -1451,10 +1446,11 @@ static void emmc_boot(void)
 		return;
 	}
 #endif
-
+	EMMC_DMA_mode = 0;/*PIO mode, Load IMEM/DMEM bin code into SRAM */
 	if (run_draminit()) {
 		return;
 	}
+	EMMC_DMA_mode = 1;
 
 #ifdef CONFIG_USE_ZMEM
 	zmem_check_uboot();

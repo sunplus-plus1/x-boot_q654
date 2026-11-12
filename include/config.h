@@ -278,7 +278,7 @@
 * eMMC
 ***********************/
 #define EMMC_SLOT_NUM   0
-//#define EMMC_USE_DMA_READ	/* can't DMA to SRAM */
+#define EMMC_USE_DMA_READ
 
 #define HAVE_UBOOT2_IN_EMMC	/* Use 2nd uboot if avaiable. Fallback to 1st uboot. */
 
